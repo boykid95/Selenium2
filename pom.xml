@@ -62,7 +62,7 @@
             <version>2.17.1</version>
         </dependency>
 
-        <!-- (Optional) Web -->
+        <!-- (Optional) WebDriverManager-->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>

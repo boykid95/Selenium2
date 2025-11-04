@@ -1,40 +1,28 @@
 package vn.agest.selenium.core;
 
-import vn.agest.selenium.enums.BrowserType;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.edge.EdgeDriver;
+import vn.agest.selenium.enums.BrowserType;
 
 public class DriverFactory {
     private static WebDriver driver;
 
-    public static WebDriver getDriver() {
+    public static WebDriver getDriver(String browser) {
         if (driver == null) {
-            String browser = ConfigReader.get("browser");
-            BrowserType browserType = BrowserType.fromString(browser);
-
-            switch (browserType) {
-                case CHROME -> {
-                    WebDriverManager.chromedriver().setup();
-                    driver = new ChromeDriver();
-                }
-                case FIREFOX -> {
-                    WebDriverManager.firefoxdriver().setup();
-                    driver = new FirefoxDriver();
-                }
-                case EDGE -> {
-                    WebDriverManager.edgedriver().setup();
-                    driver = new EdgeDriver();
-                }
-                default -> throw new IllegalArgumentException("Unsupported browser: " + browser);
-            }
+            WebDriverFactory factory = getFactory(browser);
+            driver = factory.createDriver();
             driver.manage().window().maximize();
         }
         return driver;
     }
-
+    private static WebDriverFactory getFactory(String browser) {
+        BrowserType browserType = BrowserType.fromString(browser);
+        return switch (browserType) {
+            case CHROME -> new ChromeDriverFactory();
+            case FIREFOX -> new FirefoxDriverFactory();
+            case EDGE -> new EdgeDriverFactory();
+            default -> throw new IllegalArgumentException("Unsupported browser: " + browser);
+        };
+    }
     public static void quitDriver() {
         if (driver != null) {
             driver.quit();
