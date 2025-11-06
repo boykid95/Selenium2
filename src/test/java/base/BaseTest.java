@@ -1,19 +1,20 @@
 package base;
 
-import org.openqa.selenium.WebDriver;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import vn.agest.selenium.core.ConfigReader;
-import vn.agest.selenium.core.DriverFactory;
+import vn.agest.selenium.core.driver.DriverManager;
+import vn.agest.selenium.core.config.ConfigReader;
 
-public class BaseTest {
-    protected WebDriver driver;
-    @BeforeMethod
+public abstract class BaseTest {
+
+    @BeforeMethod(alwaysRun = true)
     public void setUp() {
-        driver = DriverFactory.getDriver(ConfigReader.get("browser"));
+        String browser = ConfigReader.getOrDefault("browser", "chrome");
+        DriverManager.initDriver(browser);
     }
-    @AfterMethod
+
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
-        DriverFactory.quitDriver();
+        DriverManager.quitDriver();
     }
 }

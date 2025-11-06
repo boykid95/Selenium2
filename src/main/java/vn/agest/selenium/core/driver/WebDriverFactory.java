@@ -1,4 +1,4 @@
-package vn.agest.selenium.core;
+package vn.agest.selenium.core.driver;
 
 import org.openqa.selenium.WebDriver;
 

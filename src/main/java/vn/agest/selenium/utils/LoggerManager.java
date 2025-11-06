@@ -1,4 +1,4 @@
-package vn.agest.selenium.core;
+package vn.agest.selenium.utils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
