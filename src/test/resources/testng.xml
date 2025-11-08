@@ -1,6 +1,8 @@
-<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
-<suite name="Suite">
-    <test name="Test">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Selenium Suite" verbose="1">
+    <test name="Run TC 00">
         <classes>
             <class name="testcase.TC_00_Test"/>
         </classes>

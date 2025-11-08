@@ -1,9 +1,20 @@
 package vn.agest.selenium.enums;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum BrowserType {
     CHROME("chrome"),
     FIREFOX("firefox"),
     EDGE("edge");
+
+    private static final Map<String, BrowserType> MAP = new HashMap<>();
+
+    static {
+        for (BrowserType type : values()) {
+            MAP.put(type.value.toLowerCase(), type);
+        }
+    }
 
     private final String value;
 
@@ -11,16 +22,11 @@ public enum BrowserType {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
-    }
-
     public static BrowserType fromString(String value) {
-        for (BrowserType type : BrowserType.values()) {
-            if (type.getValue().equalsIgnoreCase(value)) {
-                return type;
-            }
+        BrowserType type = MAP.get(value.toLowerCase());
+        if (type == null) {
+            throw new IllegalArgumentException("Unknown browser: " + value);
         }
-        throw new IllegalArgumentException("Unknown browser: " + value);
+        return type;
     }
 }
