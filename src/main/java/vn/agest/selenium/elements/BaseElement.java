@@ -1,75 +1,145 @@
 package vn.agest.selenium.elements;
 
+import io.qameta.allure.Step;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import vn.agest.selenium.utils.ElementUtils;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import vn.agest.selenium.core.config.ConfigReader;
+import vn.agest.selenium.core.config.SystemConfig;
+import vn.agest.selenium.core.driver.DriverManager;
+
+import java.time.Duration;
 
 public class BaseElement {
 
     private static final Logger LOG = LogManager.getLogger(BaseElement.class);
-
-    private final By locator;
+    protected final By locator;
 
     public BaseElement(By locator) {
         this.locator = locator;
     }
 
-    public By getLocator() {
-        return locator;
+    // Dynamic factory
+    public static BaseElement xpath(String template, Object... args) {
+        return new BaseElement(By.xpath(String.format(template, args)));
     }
 
-    // ================== BASIC ACTIONS ================== //
+    public static BaseElement css(String template, Object... args) {
+        return new BaseElement(By.cssSelector(String.format(template, args)));
+    }
 
+    protected WebDriver driver() {
+        return DriverManager.getDriver();
+    }
+
+    protected WebDriverWait waitUi() {
+        long timeout = ConfigReader.getInt("explicitTimeout", 10);
+        return new WebDriverWait(driver(), Duration.ofSeconds(timeout));
+    }
+
+    protected WebElement find() {
+        return driver().findElement(locator);
+    }
+
+    protected WebElement waitForVisible() {
+        LOG.debug("[Wait Visible] {}", locator);
+        return waitUi().until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
+    protected WebElement waitForClickable() {
+        LOG.debug("[Wait Clickable] {}", locator);
+        return waitUi().until(ExpectedConditions.elementToBeClickable(locator));
+    }
+
+    @Step("Click element: {this.locator}")
     public void click() {
-        LOG.info("Click on element: {}", locator);
-        ElementUtils.click(locator);
+        LOG.info("[Click] {}", locator);
+        try {
+            WebElement e = waitForClickable();
+            highlight(e);
+            e.click();
+        } catch (Exception ex) {
+            LOG.warn("[Click] Failed → fallback JS click → {}", locator);
+            jsClick();
+        }
     }
 
     public void jsClick() {
-        LOG.info("JS Click on element: {}", locator);
-        ElementUtils.jsClick(locator);
+        LOG.info("[JS Click] {}", locator);
+        try {
+            WebElement e = waitForVisible();
+            highlight(e);
+            ((JavascriptExecutor) driver()).executeScript("arguments[0].click();", e);
+        } catch (Exception ex) {
+            LOG.error("[JS Click] FAILED → {}", locator, ex);
+            throw new RuntimeException("JS click failed for: " + locator, ex);
+        }
     }
 
+    @Step("Get text from element: {this.locator}")
     public String getText() {
-        LOG.debug("Get text from element: {}", locator);
-        WebElement element = ElementUtils.waitForVisible(locator);
-        return element.getText();
+        LOG.debug("[GetText] {}", locator);
+        return waitForVisible().getText();
     }
 
+    @Step("Set text '{text}' into: {this.locator}")
     public void setText(String text) {
-        LOG.info("Set text '{}' into element: {}", text, locator);
-        ElementUtils.type(locator, text);
+        LOG.info("[Type] {} => '{}'", locator, text);
+        WebElement e = waitForVisible();
+        highlight(e);
+        e.clear();
+        e.sendKeys(text);
     }
 
     public boolean isDisplayed() {
-        LOG.debug("Check if element is displayed: {}", locator);
         try {
-            return ElementUtils.waitForVisible(locator).isDisplayed();
-        } catch (Exception e) {
-            LOG.warn("Element NOT displayed: {}", locator);
+            return waitForVisible().isDisplayed();
+        } catch (Exception ex) {
+            LOG.warn("[Displayed?] FALSE: {}", locator);
             return false;
         }
     }
 
     public boolean isEnabled() {
-        LOG.debug("Check if element is enabled: {}", locator);
         try {
-            return ElementUtils.waitForVisible(locator).isEnabled();
-        } catch (Exception e) {
-            LOG.warn("Element NOT enabled: {}", locator);
+            return waitForVisible().isEnabled();
+        } catch (Exception ex) {
+            LOG.warn("[Enabled?] FALSE: {}", locator);
             return false;
         }
     }
 
     public void scrollTo() {
-        LOG.info("Scroll to element: {}", locator);
-        ElementUtils.scrollIntoView(locator);
+        LOG.info("[ScrollIntoView] {}", locator);
+        WebElement e = waitForVisible();
+        highlight(e);
+        ((JavascriptExecutor) driver())
+                .executeScript("arguments[0].scrollIntoView(true);", e);
     }
 
     public void moveTo() {
-        LOG.info("Move cursor to element: {}", locator);
-        ElementUtils.moveTo(locator);
+        LOG.info("[MoveTo] {}", locator);
+        WebElement e = waitForVisible();
+        highlight(e);
+        new Actions(driver()).moveToElement(e).perform();
+    }
+
+    protected void highlight(WebElement element) {
+        boolean enabled = SystemConfig.getBoolean("highlight.enabled", true);
+        if (!enabled) return;
+
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver();
+            js.executeScript("arguments[0].style.border='2px solid red'", element);
+            Thread.sleep(120);
+            js.executeScript("arguments[0].style.border=''", element);
+        } catch (Exception ignore) {
+        }
     }
 }

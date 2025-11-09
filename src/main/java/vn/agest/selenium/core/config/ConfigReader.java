@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class ConfigReader {
+public final class ConfigReader {
 
     private static final Logger LOG = LogManager.getLogger(ConfigReader.class);
     private static final Properties props = new Properties();
@@ -30,35 +30,58 @@ public class ConfigReader {
         }
     }
 
+    private ConfigReader() {
+    }
+
+    // Note: Read value from file only (no CLI override)
     public static String get(String key) {
-        String cliValue = System.getProperty(key);
-        if (cliValue != null) {
-            LOG.debug("Config override from CLI: {} = {}", key, cliValue);
-            return cliValue;
+        String value = props.getProperty(key);
+        LOG.debug("Config read: {} = {}", key, value);
+        return value;
+    }
+
+    // Note: CLI overrides handled ONLY by SystemConfig
+    public static String getOrDefault(String key, String defaultValue) {
+        String cli = SystemConfig.get(key);
+        if (cli != null) {
+            LOG.debug("CLI override: {} = {}", key, cli);
+            return cli;
         }
 
         String fileValue = props.getProperty(key);
-        LOG.debug("Config read: {} = {}", key, fileValue);
-        return fileValue;
-    }
-
-    public static String getOrDefault(String key, String defaultValue) {
-        String value = get(key);
-        return value != null ? value : defaultValue;
+        return fileValue != null ? fileValue : defaultValue;
     }
 
     public static boolean getBoolean(String key, boolean defaultValue) {
-        String value = get(key);
-        return value == null ? defaultValue : Boolean.parseBoolean(value);
+        String cli = SystemConfig.get(key);
+        if (cli != null) {
+            LOG.debug("CLI override: {} = {}", key, cli);
+            return Boolean.parseBoolean(cli);
+        }
+
+        String fileValue = props.getProperty(key);
+        return fileValue == null ? defaultValue : Boolean.parseBoolean(fileValue);
     }
 
     public static int getInt(String key, int defaultValue) {
-        String value = get(key);
-        try {
-            return value == null ? defaultValue : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            LOG.warn("Invalid integer for key {}: {} → using default {}", key, value, defaultValue);
-            return defaultValue;
+        String cli = SystemConfig.get(key);
+        if (cli != null) {
+            LOG.debug("CLI override: {} = {}", key, cli);
+            try {
+                return Integer.parseInt(cli);
+            } catch (NumberFormatException ignored) {
+            }
         }
+
+        String fileValue = props.getProperty(key);
+        if (fileValue != null) {
+            try {
+                return Integer.parseInt(fileValue);
+            } catch (NumberFormatException e) {
+                LOG.warn("Invalid integer for key {}: {} → using default {}", key, fileValue, defaultValue);
+            }
+        }
+
+        return defaultValue;
     }
 }

@@ -1,9 +1,14 @@
 package vn.agest.selenium.pageObjects;
 
+import io.qameta.allure.Step;
+import vn.agest.selenium.core.config.ConfigReader;
+
 public class GooglePage extends BasePage {
 
-    // Will be removed in future
-    public GooglePage() {
-        super("https://www.google.com");
+    private static final String GOOGLE_URL = ConfigReader.get("url.google");
+
+    @Step("Open Google homepage")
+    public void openPage() {
+        open(GOOGLE_URL);
     }
 }
