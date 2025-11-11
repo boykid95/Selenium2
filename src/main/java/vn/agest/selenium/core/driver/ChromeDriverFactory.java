@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.net.URL;
@@ -20,7 +21,12 @@ public class ChromeDriverFactory implements WebDriverFactory {
         try {
             WebDriverManager.chromedriver().setup();
             LOG.debug("[Chrome] WebDriverManager setup completed.");
-            return new ChromeDriver(OptionsFactory.chrome());
+
+            ChromeOptions options = OptionsFactory.chrome();
+            LOG.debug("[Chrome] Loaded ChromeOptions");
+
+            return new ChromeDriver(options);
+
         } catch (Exception e) {
             LOG.error("[Chrome] Failed to initialize LOCAL ChromeDriver", e);
             throw new RuntimeException("Failed to initialize local ChromeDriver", e);
@@ -29,10 +35,14 @@ public class ChromeDriverFactory implements WebDriverFactory {
 
     @Override
     public WebDriver createRemoteDriver(URL gridUrl) {
-        LOG.info("[Chrome] Initializing REMOTE ChromeDriver via Grid URL: {}", gridUrl);
+        LOG.info("[Chrome] Initializing REMOTE ChromeDriver => {}", gridUrl);
 
         try {
-            return new RemoteWebDriver(gridUrl, OptionsFactory.chrome());
+            ChromeOptions options = OptionsFactory.chrome();
+            LOG.debug("[Chrome] Loaded ChromeOptions for REMOTE");
+
+            return new RemoteWebDriver(gridUrl, options);
+
         } catch (Exception e) {
             LOG.error("[Chrome] Failed to initialize REMOTE ChromeDriver", e);
             throw new RuntimeException("Failed to initialize remote ChromeDriver", e);

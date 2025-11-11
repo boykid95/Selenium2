@@ -2,6 +2,7 @@ package vn.agest.selenium.core.config;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import vn.agest.selenium.enums.PageType;
 
 import java.io.InputStream;
 import java.util.Properties;
@@ -9,7 +10,8 @@ import java.util.Properties;
 public final class ConfigReader {
 
     private static final Logger LOG = LogManager.getLogger(ConfigReader.class);
-    private static final Properties props = new Properties();
+    private static final Properties configProps = new Properties();
+    private static final Properties pageTitlesProps = new Properties();
 
     static {
         try (InputStream input = ConfigReader.class
@@ -21,7 +23,7 @@ public final class ConfigReader {
                 throw new RuntimeException("config.properties file not found in resources folder.");
             }
 
-            props.load(input);
+            configProps.load(input);
             LOG.debug("Loaded config.properties successfully.");
 
         } catch (Exception e) {
@@ -35,7 +37,7 @@ public final class ConfigReader {
 
     // Note: Read value from file only (no CLI override)
     public static String get(String key) {
-        String value = props.getProperty(key);
+        String value = configProps.getProperty(key);
         LOG.debug("Config read: {} = {}", key, value);
         return value;
     }
@@ -48,7 +50,7 @@ public final class ConfigReader {
             return cli;
         }
 
-        String fileValue = props.getProperty(key);
+        String fileValue = configProps.getProperty(key);
         return fileValue != null ? fileValue : defaultValue;
     }
 
@@ -59,7 +61,7 @@ public final class ConfigReader {
             return Boolean.parseBoolean(cli);
         }
 
-        String fileValue = props.getProperty(key);
+        String fileValue = configProps.getProperty(key);
         return fileValue == null ? defaultValue : Boolean.parseBoolean(fileValue);
     }
 
@@ -73,7 +75,7 @@ public final class ConfigReader {
             }
         }
 
-        String fileValue = props.getProperty(key);
+        String fileValue = configProps.getProperty(key);
         if (fileValue != null) {
             try {
                 return Integer.parseInt(fileValue);
@@ -83,5 +85,12 @@ public final class ConfigReader {
         }
 
         return defaultValue;
+    }
+
+    public static String getUrlFromPageType(PageType pageType) {
+        
+    }
+
+    public static String getTitleFromPageType(PageType pageType) {
     }
 }

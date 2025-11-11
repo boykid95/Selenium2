@@ -2,23 +2,25 @@ package testcases;
 
 import base.BaseTest;
 import io.qameta.allure.Description;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import vn.agest.selenium.pageObjects.GooglePage;
+import org.testng.asserts.SoftAssert;
+import vn.agest.selenium.pageObjects.HomePage;
 
 public class TC_00_Test extends BaseTest {
 
-    @Test(description = "Verify Google title")
-    @Description("Open Google homepage and verify its page title")
-    public void testGoogleHomePage() {
+    @Test(description = "Verify Homepage title")
+    @Description("Open homepage and verify title")
+    public void testOpenHomePage() {
 
-        GooglePage google = new GooglePage();
+        SoftAssert softAssert = new SoftAssert();
 
-        google.openPage();
+        HomePage homePage = new HomePage();
 
-        Assert.assertTrue(
-                google.getTitle().contains("Google"),
-                "Page title does not contain 'Google'"
-        );
+        homePage.open();
+
+        String actual = driver.getTitle();
+        soft.assertTrue(actual.contains("TestArchitect"), "Homepage title mismatch!");
+
+        softAssert.assertAll();
     }
 }
