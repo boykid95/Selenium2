@@ -1,25 +1,30 @@
 package vn.agest.selenium.core.config;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public final class WindowConfig {
+
+    private static final Logger LOG = LogManager.getLogger(WindowConfig.class);
 
     private WindowConfig() {
     }
 
-    // Get window mode: maximize | fullscreen | custom
     public static String mode() {
-        String mode = ConfigReader.getOrDefault("window.mode", "maximize");
-        return mode == null ? "maximize" : mode.trim();
+        String mode = ConfigLoader.getString("window.mode");
+        LOG.debug("Window mode = {}", mode);
+        return mode;
     }
 
-    // Custom width — return -1 when invalid (DriverWindowManager will fallback)
     public static int width() {
-        int w = ConfigReader.getInt("window.width", -1);
-        return w > 0 ? w : -1;
+        int width = ConfigLoader.getInt("window.width");
+        LOG.debug("Window width = {}", width);
+        return width;
     }
 
-    // Custom height — return -1 when invalid
     public static int height() {
-        int h = ConfigReader.getInt("window.height", -1);
-        return h > 0 ? h : -1;
+        int height = ConfigLoader.getInt("window.height");
+        LOG.debug("Window height = {}", height);
+        return height;
     }
 }

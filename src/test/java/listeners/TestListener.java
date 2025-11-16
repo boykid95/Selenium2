@@ -16,7 +16,6 @@ public class TestListener implements ITestListener {
     @Override
     public void onTestSuccess(ITestResult result) {
         AllureHelper.attachText("Test Result", "PASSED");
-        DriverManager.quitDriver();
     }
 
     @Override
@@ -24,18 +23,16 @@ public class TestListener implements ITestListener {
         AllureHelper.attachScreenshot("Failure Screenshot");
         AllureHelper.attachPageSource();
         AllureHelper.attachText("Error Message", result.getThrowable().toString());
-
-        DriverManager.quitDriver();
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
         AllureHelper.attachText("Test Result", "SKIPPED");
-        DriverManager.quitDriver();
     }
 
     @Override
     public void onFinish(ITestContext context) {
         System.out.println("=== TEST SUITE FINISHED ===");
+        DriverManager.quitDriver();
     }
 }

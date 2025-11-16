@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import vn.agest.selenium.core.config.ConfigReader;
+import vn.agest.selenium.core.config.ConfigLoader;
 
 public class OptionsFactory {
 
@@ -22,7 +22,7 @@ public class OptionsFactory {
         options.addArguments("--disable-notifications");
         LOG.debug("Added argument: --disable-notifications");
 
-        if (ConfigReader.getBoolean("headless", false)) {
+        if (ConfigLoader.getBoolean("headless")) {
             options.addArguments("--headless=new");
             LOG.info("Chrome running in HEADLESS mode");
         } else {
@@ -40,7 +40,7 @@ public class OptionsFactory {
         options.setAcceptInsecureCerts(true);
         LOG.debug("Set accept insecure certs = true");
 
-        if (ConfigReader.getBoolean("headless", false)) {
+        if (ConfigLoader.getBoolean("headless")) {
             options.addArguments("-headless");
             LOG.info("Firefox running in HEADLESS mode");
         } else {
@@ -58,7 +58,7 @@ public class OptionsFactory {
         options.setAcceptInsecureCerts(true);
         LOG.debug("Set accept insecure certs = true");
 
-        if (ConfigReader.getBoolean("headless", false)) {
+        if (ConfigLoader.getBoolean("headless")) {
             options.addArguments("--headless=new");
             LOG.info("Edge running in HEADLESS mode");
         } else {

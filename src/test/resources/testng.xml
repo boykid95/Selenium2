@@ -3,12 +3,12 @@
 
 <suite name="Selenium Suite" verbose="1">
     <listeners>
-        <listener class-name="listeners.TestListener"/>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
     </listeners>
 
     <test name="Run Google Test">
         <classes>
-            <class name="testcases.TC_00_Test"/>
+            <class name="testcases.DemoOpenHomePageTest"/>
         </classes>
     </test>
 </suite>

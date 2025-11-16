@@ -10,7 +10,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import vn.agest.selenium.core.config.ConfigReader;
+import vn.agest.selenium.core.config.ConfigLoader;
 import vn.agest.selenium.core.config.SystemConfig;
 import vn.agest.selenium.core.driver.DriverManager;
 
@@ -39,7 +39,7 @@ public class BaseElement {
     }
 
     protected WebDriverWait waitUi() {
-        long timeout = ConfigReader.getInt("explicitTimeout", 10);
+        long timeout = ConfigLoader.getInt("explicitTimeout");
         return new WebDriverWait(driver(), Duration.ofSeconds(timeout));
     }
 
