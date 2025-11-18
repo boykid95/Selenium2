@@ -1,6 +1,5 @@
 package vn.agest.selenium.core.driver;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
@@ -19,8 +18,8 @@ public class EdgeDriverFactory implements WebDriverFactory {
         LOG.info("[Edge] Initializing LOCAL EdgeDriver...");
 
         try {
-            WebDriverManager.edgedriver().setup();
-            LOG.debug("[Edge] WebDriverManager setup completed.");
+            System.setProperty("webdriver.edge.driver", "drivers/edge/msedgedriver.exe");
+            LOG.info("[Edge] Using driver at {}", "drivers/edge/msedgedriver.exe");
 
             EdgeOptions options = OptionsFactory.edge();
             LOG.debug("[Edge] Loaded EdgeOptions");

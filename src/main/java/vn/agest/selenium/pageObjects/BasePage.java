@@ -37,8 +37,9 @@ public abstract class BasePage {
 
         for (int i = 0; i < 30; i++) {
             try {
-                if ("complete".equals(js.executeScript("return document.readyState")))
+                if ("complete".equals(js.executeScript("return document.readyState"))) {
                     return;
+                }
                 Thread.sleep(120);
             } catch (Exception ignore) {
             }
@@ -61,21 +62,11 @@ public abstract class BasePage {
         return title;
     }
 
-    @Step("Verify page title for {this.pageType}")
-    public void verifyPageTitle() {
-        String expected = ConfigLoader.getPageTitle(pageType);
-        String actual = driver.getTitle();
-
-        LOG.info("Expected title = {}", expected);
-        LOG.info("Actual title   = {}", actual);
-
-        if (!actual.contains(expected)) {
-            throw new AssertionError(
-                    "Page title mismatch.\nExpected: " + expected + "\nActual: " + actual
-            );
-        }
-
-        LOG.info("✔ Page title verified successfully!");
+    @Step("Get current page URL")
+    public String getCurrentUrl() {
+        String url = driver.getCurrentUrl();
+        LOG.info("Current URL: {}", url);
+        return url;
     }
 
     protected BaseElement $x(String template, Object... args) {

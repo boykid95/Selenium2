@@ -16,6 +16,10 @@ public class ChromeDriverFactory implements WebDriverFactory {
 
     @Override
     public WebDriver createLocalDriver() {
+        LOG.warn("ChromeDriverFactory CLASS LOADED FROM: {}",
+                ChromeDriverFactory.class.getProtectionDomain().getCodeSource().getLocation());
+        LOG.warn("ChromeDriverFactory - USING OptionsFactory.chrome() ???");
+
         LOG.info("[Chrome] Initializing LOCAL ChromeDriver...");
 
         try {

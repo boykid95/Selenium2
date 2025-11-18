@@ -21,9 +21,7 @@ public final class ConfigLoader {
     }
 
     private static void loadJson() {
-        try (InputStream is = ConfigLoader.class
-                .getClassLoader()
-                .getResourceAsStream("config.json")) {
+        try (InputStream is = ConfigLoader.class.getClassLoader().getResourceAsStream("config.json")) {
 
             if (is == null) {
                 throw new IllegalStateException("config.json not found in resources");
@@ -39,15 +37,33 @@ public final class ConfigLoader {
     }
 
     public static String getString(String path) {
+        String sysValue = System.getProperty(path);
+        if (sysValue != null) {
+            LOG.info("[ConfigLoader] Override '{}' from CLI => {}", path, sysValue);
+            return sysValue;
+        }
         return getNode(path).asText();
     }
 
-    public static int getInt(String path) {
-        return getNode(path).asInt();
+    public static boolean getBoolean(String path) {
+        String sysValue = System.getProperty(path);
+        LOG.error("ConfigLoader.getBoolean('{}') sys='{}' json='{}'",
+                path, sysValue, getNode(path).asBoolean());
+        
+        if (sysValue != null) {
+            LOG.info("[ConfigLoader] Override '{}' from CLI => {}", path, sysValue);
+            return Boolean.parseBoolean(sysValue);
+        }
+        return getNode(path).asBoolean();
     }
 
-    public static boolean getBoolean(String path) {
-        return getNode(path).asBoolean();
+    public static int getInt(String path) {
+        String sysValue = System.getProperty(path);
+        if (sysValue != null) {
+            LOG.info("[ConfigLoader] Override '{}' from CLI => {}", path, sysValue);
+            return Integer.parseInt(sysValue);
+        }
+        return getNode(path).asInt();
     }
 
     private static JsonNode getNode(String path) {

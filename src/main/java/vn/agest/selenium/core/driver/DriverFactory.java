@@ -25,7 +25,9 @@ public final class DriverFactory {
             case EDGE -> new EdgeDriverFactory();
         };
 
-        boolean isRemote = ConfigLoader.getBoolean("remote");
+        boolean isRemote = Boolean.parseBoolean(
+                System.getProperty("remote", String.valueOf(ConfigLoader.getBoolean("remote")))
+        );
 
         try {
             WebDriver driver = isRemote

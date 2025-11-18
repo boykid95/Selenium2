@@ -1,38 +1,47 @@
 package listeners;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-import vn.agest.selenium.core.driver.DriverManager;
 import vn.agest.selenium.utils.AllureHelper;
 
 public class TestListener implements ITestListener {
 
+    private static final Logger LOG = LogManager.getLogger(TestListener.class);
+
     @Override
     public void onTestStart(ITestResult result) {
-        System.out.println("=== TEST START: " + result.getName() + " ===");
+        LOG.info("=== TEST START: {} ===", result.getName());
     }
 
     @Override
     public void onTestSuccess(ITestResult result) {
+        LOG.info("=== TEST PASSED: {} ===", result.getName());
         AllureHelper.attachText("Test Result", "PASSED");
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
+        LOG.error("=== TEST FAILED: {} ===", result.getName(), result.getThrowable());
+
         AllureHelper.attachScreenshot("Failure Screenshot");
         AllureHelper.attachPageSource();
-        AllureHelper.attachText("Error Message", result.getThrowable().toString());
+
+        if (result.getThrowable() != null) {
+            AllureHelper.attachText("Error Message", result.getThrowable().toString());
+        }
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
+        LOG.warn("=== TEST SKIPPED: {} ===", result.getName());
         AllureHelper.attachText("Test Result", "SKIPPED");
     }
 
     @Override
     public void onFinish(ITestContext context) {
-        System.out.println("=== TEST SUITE FINISHED ===");
-        DriverManager.quitDriver();
+        LOG.info("=== TEST SUITE FINISHED ===");
     }
 }
