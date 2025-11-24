@@ -1,15 +1,15 @@
 package listeners;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.utils.AllureHelper;
 
 public class TestListener implements ITestListener {
 
-    private static final Logger LOG = LogManager.getLogger(TestListener.class);
+    private static final Logger LOG = LoggerManager.getLogger(TestListener.class);
 
     @Override
     public void onTestStart(ITestResult result) {

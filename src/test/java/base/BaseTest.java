@@ -1,6 +1,5 @@
 package base;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
@@ -9,10 +8,11 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import vn.agest.selenium.core.config.ConfigLoader;
 import vn.agest.selenium.core.driver.DriverManager;
+import vn.agest.selenium.core.log.LoggerManager;
 
 public abstract class BaseTest {
 
-    private static final Logger LOG = LogManager.getLogger(BaseTest.class);
+    private static final Logger LOG = LoggerManager.getLogger(BaseTest.class);
 
     @BeforeMethod(alwaysRun = true)
     @Parameters({"browser", "remote"})
@@ -20,43 +20,22 @@ public abstract class BaseTest {
                       @Optional("") String browserParam,
                       @Optional("") String remoteParam) {
 
-        String browser = !browserParam.isEmpty()
-                ? browserParam
-                : ConfigLoader.getString("browser");
+        String browser = browserParam.isEmpty()
+                ? ConfigLoader.getString("browser")
+                : browserParam;
 
-        String remote = !remoteParam.isEmpty()
-                ? remoteParam
-                : ConfigLoader.getString("remote");
+        String remote = remoteParam.isEmpty()
+                ? ConfigLoader.getString("remote")
+                : remoteParam;
 
-        LOG.info("========== START TEST: {} ==========", result.getMethod().getMethodName());
-        LOG.info("Browser = {}", browser);
-        LOG.info("Remote  = {}", remote);
-
-        System.setProperty("browser", browser);
-        System.setProperty("remote", remote);
+        LOG.debug("Browser = {}", browser);
+        LOG.debug("Remote  = {}", remote);
 
         DriverManager.initDriver(browser);
     }
 
     @AfterMethod(alwaysRun = true)
     public void tearDown(ITestResult result) {
-        LOG.info("========== END TEST: {} - Status: {} ==========",
-                result.getMethod().getMethodName(),
-                getStatusName(result.getStatus()));
-
         DriverManager.quitDriver();
-    }
-
-    private String getStatusName(int status) {
-        switch (status) {
-            case ITestResult.SUCCESS:
-                return "PASSED";
-            case ITestResult.FAILURE:
-                return "FAILED";
-            case ITestResult.SKIP:
-                return "SKIPPED";
-            default:
-                return "UNKNOWN";
-        }
     }
 }

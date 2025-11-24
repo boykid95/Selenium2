@@ -1,73 +1,53 @@
 package vn.agest.selenium.pageObjects;
 
 import io.qameta.allure.Step;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
-import vn.agest.selenium.core.config.ConfigLoader;
+import vn.agest.selenium.core.config.PageTitleLoader;
 import vn.agest.selenium.core.driver.DriverManager;
+import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.elements.BaseElement;
 import vn.agest.selenium.enums.PageType;
+import vn.agest.selenium.model.PageInfo;
 
 public abstract class BasePage {
 
-    private static final Logger LOG = LogManager.getLogger(BasePage.class);
+    private static final Logger LOG = LoggerManager.getLogger(BasePage.class);
 
     protected final WebDriver driver;
     protected final PageType pageType;
+    protected final PageInfo pageInfo;
 
     public BasePage(PageType pageType) {
         this.driver = DriverManager.getDriver();
         this.pageType = pageType;
+        this.pageInfo = PageTitleLoader.get(pageType);
     }
+
+    // ===================== OPEN PAGE =====================
 
     @Step("Open page: {this.pageType}")
     public void open() {
-        String url = ConfigLoader.getPageUrl(pageType);
-        LOG.info("Opening [{}] → {}", pageType.name(), url);
-
-        driver.get(url);
-        waitForPageLoaded();
+        LOG.info("Opening [{}] → {}", pageType.name(), pageInfo.url());
+        driver.get(pageInfo.url());
     }
 
-    @Step("Wait for page fully loaded")
-    public void waitForPageLoaded() {
-        JavascriptExecutor js = (JavascriptExecutor) driver;
-
-        for (int i = 0; i < 30; i++) {
-            try {
-                if ("complete".equals(js.executeScript("return document.readyState"))) {
-                    return;
-                }
-                Thread.sleep(120);
-            } catch (Exception ignore) {
-            }
-        }
-
-        LOG.warn("Page load timeout exceeded → may not be fully loaded.");
-    }
+    // ===================== GETTERS =====================
 
     @Step("Get expected title of current page")
     public String getExpectedTitle() {
-        String expectedTitle = ConfigLoader.getPageTitle(pageType);
-        LOG.info("Expected page title for {}: {}", pageType, expectedTitle);
-        return expectedTitle;
+        LOG.debug("Expected title for [{}]: {}", pageType, pageInfo.title());
+        return pageInfo.title();
     }
 
     @Step("Get current page title")
     public String getPageTitle() {
         String title = driver.getTitle();
-        LOG.info("Current page title: {}", title);
+        LOG.debug("Current page title: {}", title);
         return title;
     }
 
-    @Step("Get current page URL")
-    public String getCurrentUrl() {
-        String url = driver.getCurrentUrl();
-        LOG.info("Current URL: {}", url);
-        return url;
-    }
+    // ===================== ELEMENT HELPERS =====================
 
     protected BaseElement $x(String template, Object... args) {
         return BaseElement.xpath(template, args);

@@ -1,12 +1,12 @@
 package vn.agest.selenium.core.driver;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
+import vn.agest.selenium.core.log.LoggerManager;
 
 public final class DriverManager {
 
-    private static final Logger LOG = LogManager.getLogger(DriverManager.class);
+    private static final Logger LOG = LoggerManager.getLogger(DriverManager.class);
     private static final ThreadLocal<WebDriver> TL_DRIVER = new ThreadLocal<>();
 
     private DriverManager() {

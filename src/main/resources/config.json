@@ -1,7 +1,6 @@
 {
   "browser": "chrome",
   "remote": false,
-  "gridUrl": "http://localhost:4444/wd/hub",
   "headless": false,
   "timeouts": {
     "explicit": 10,
@@ -12,11 +11,5 @@
     "mode": "custom",
     "width": 1280,
     "height": 800
-  },
-  "pages": {
-    "HOME_PAGE": {
-      "url": "https://google.com/",
-      "title": "GoogleGoogleGoogle"
-    }
   }
 }

@@ -1,18 +1,18 @@
 package vn.agest.selenium.core.driver;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import vn.agest.selenium.core.config.ConfigLoader;
 import vn.agest.selenium.core.config.WindowConfig;
+import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.enums.BrowserType;
 
 import java.net.URL;
 
 public final class DriverFactory {
 
-    private static final Logger LOG = LogManager.getLogger(DriverFactory.class);
+    private static final Logger LOG = LoggerManager.getLogger(DriverFactory.class);
 
     private DriverFactory() {
     }

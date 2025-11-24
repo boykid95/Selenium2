@@ -1,11 +1,11 @@
 package vn.agest.selenium.core.config;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import vn.agest.selenium.core.log.LoggerManager;
 
 public final class WindowConfig {
 
-    private static final Logger LOG = LogManager.getLogger(WindowConfig.class);
+    private static final Logger LOG = LoggerManager.getLogger(WindowConfig.class);
 
     private WindowConfig() {
     }

@@ -1,117 +1,96 @@
 package vn.agest.selenium.utils;
 
 import io.qameta.allure.Step;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.FluentWait;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import vn.agest.selenium.core.config.ConfigLoader;
 import vn.agest.selenium.core.driver.DriverManager;
+import vn.agest.selenium.core.log.LoggerManager;
 
 import java.time.Duration;
-import java.util.function.Function;
 
 public final class WaitHelper {
 
-    private static final Logger LOG = LogManager.getLogger(WaitHelper.class);
-
-    private static final int EXPLICIT_TIMEOUT =
-            Integer.parseInt(System.getProperty("explicitTimeout", "10"));
+    private static final Logger LOG = LoggerManager.getLogger(WaitHelper.class);
 
     private WaitHelper() {
     }
 
-    private static FluentWait<WebDriver> getWait() {
-        return new FluentWait<>(DriverManager.getDriver())
-                .withTimeout(Duration.ofSeconds(EXPLICIT_TIMEOUT))
-                .pollingEvery(Duration.ofMillis(500))
-                .ignoring(StaleElementReferenceException.class)
-                .ignoring(NoSuchElementException.class);
+    // ================= CORE WAIT =================
+    private static WebDriverWait waitDefault() {
+        int timeout = ConfigLoader.timeout("explicit");
+        return new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(timeout));
     }
 
-    // =============== Internal Wrapper ===============
-    private static <T> T wrap(By locator, Function<WebDriver, T> condition, String label) {
-        try {
-            LOG.debug("[WAIT:{}] {}", label, locator);
-            return getWait().until(condition);
-        } catch (TimeoutException e) {
-            LOG.error("[TIMEOUT:{}] {}", label, locator);
-            throw e;
-        } catch (Exception e) {
-            LOG.error("[WAIT ERROR:{}] {}", label, locator, e);
-            throw e;
-        }
-    }
-
-    // =============== BASIC WAITS ===============
+    // ================= BASIC WAITS =================
 
     @Step("Wait for VISIBLE: {locator}")
     public static WebElement waitForVisible(By locator) {
-        return wrap(locator,
-                ExpectedConditions.visibilityOfElementLocated(locator),
-                "VISIBLE");
+        LOG.debug("[WAIT] visible → {}", locator);
+        return waitDefault().until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
     @Step("Wait for CLICKABLE: {locator}")
     public static WebElement waitForClickable(By locator) {
-        return wrap(locator,
-                ExpectedConditions.elementToBeClickable(locator),
-                "CLICKABLE");
+        LOG.debug("[WAIT] clickable → {}", locator);
+        return waitDefault().until(ExpectedConditions.elementToBeClickable(locator));
     }
 
     @Step("Wait for PRESENCE: {locator}")
-    public static WebElement waitPresence(By locator) {
-        return wrap(locator,
-                ExpectedConditions.presenceOfElementLocated(locator),
-                "PRESENCE");
+    public static WebElement waitForPresence(By locator) {
+        LOG.debug("[WAIT] presence → {}", locator);
+        return waitDefault().until(ExpectedConditions.presenceOfElementLocated(locator));
     }
 
     @Step("Wait for INVISIBLE: {locator}")
-    public static boolean waitForInvisible(By locator) {
-        return wrap(locator,
-                ExpectedConditions.invisibilityOfElementLocated(locator),
-                "INVISIBLE");
+    public static void waitForInvisible(By locator) {
+        LOG.debug("[WAIT] invisible → {}", locator);
+        waitDefault().until(ExpectedConditions.invisibilityOfElementLocated(locator));
     }
 
-    // =============== ADVANCED WAITS ===============
+    // ================= ADVANCED WAITS =================
 
     @Step("Wait for TEXT '{text}' in: {locator}")
-    public static boolean waitForText(By locator, String text) {
-        return wrap(locator,
-                ExpectedConditions.textToBePresentInElementLocated(locator, text),
-                "TEXT");
+    public static void waitForText(By locator, String text) {
+        LOG.debug("[WAIT] text '{}' → {}", text, locator);
+        waitDefault().until(ExpectedConditions.textToBePresentInElementLocated(locator, text));
     }
 
     @Step("Wait for URL contains: {fragment}")
-    public static boolean waitForUrlContains(String fragment) {
-        return getWait().until(ExpectedConditions.urlContains(fragment));
+    public static void waitForUrlContains(String fragment) {
+        LOG.debug("[WAIT] url contains '{}'", fragment);
+        waitDefault().until(ExpectedConditions.urlContains(fragment));
     }
 
     @Step("Wait for ATTRIBUTE {attribute} contains '{value}' in {locator}")
-    public static boolean waitForAttribute(By locator, String attr, String value) {
-        return wrap(locator,
-                ExpectedConditions.attributeContains(locator, attr, value),
-                "ATTRIBUTE");
+    public static void waitForAttribute(By locator, String attribute, String value) {
+        LOG.debug("[WAIT] attribute '{}' contains '{}' → {}", attribute, value, locator);
+        waitDefault().until(ExpectedConditions.attributeContains(locator, attribute, value));
     }
 
     @Step("Wait for element COUNT = {expected}")
-    public static boolean waitForElementCount(By locator, int expected) {
-        return wrap(locator,
-                driver -> driver.findElements(locator).size() == expected,
-                "ELEMENT-COUNT");
+    public static void waitForElementCount(By locator, int expected) {
+        LOG.debug("[WAIT] element-count = {} → {}", expected, locator);
+        waitDefault().until(driver -> driver.findElements(locator).size() == expected);
     }
 
     @Step("Wait for PAGE LOAD complete")
     public static void waitForPageLoaded() {
-        getWait().until(driver ->
-                ((JavascriptExecutor) driver)
-                        .executeScript("return document.readyState")
-                        .equals("complete")
+        LOG.debug("[WAIT] document.readyState = complete");
+        waitDefault().until(d ->
+                "complete".equals(
+                        ((org.openqa.selenium.JavascriptExecutor) d)
+                                .executeScript("return document.readyState")
+                )
         );
     }
 
     @Step("Wait visible & clickable: {locator}")
     public static WebElement waitForVisibleAndClickable(By locator) {
+        LOG.debug("[WAIT] visible & clickable → {}", locator);
         waitForVisible(locator);
         return waitForClickable(locator);
     }

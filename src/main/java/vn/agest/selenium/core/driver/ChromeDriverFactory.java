@@ -1,18 +1,18 @@
 package vn.agest.selenium.core.driver;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import vn.agest.selenium.core.log.LoggerManager;
 
 import java.net.URL;
 
 public class ChromeDriverFactory implements WebDriverFactory {
 
-    private static final Logger LOG = LogManager.getLogger(ChromeDriverFactory.class);
+    private static final Logger LOG = LoggerManager.getLogger(ChromeDriverFactory.class);
 
     @Override
     public WebDriver createLocalDriver() {

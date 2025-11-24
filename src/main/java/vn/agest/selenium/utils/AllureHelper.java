@@ -1,18 +1,18 @@
 package vn.agest.selenium.utils;
 
 import io.qameta.allure.Allure;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import vn.agest.selenium.core.driver.DriverManager;
+import vn.agest.selenium.core.log.LoggerManager;
 
 import java.nio.charset.StandardCharsets;
 
 public final class AllureHelper {
 
-    private static final Logger LOG = LogManager.getLogger(AllureHelper.class);
+    private static final Logger LOG = LoggerManager.getLogger(AllureHelper.class);
 
     private AllureHelper() {
     }

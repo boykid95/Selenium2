@@ -26,18 +26,16 @@ public class DemoOpenHomePageTest extends BaseTest {
 
         String actualTitle = homePage.getPageTitle();
         String expectedTitle = homePage.getExpectedTitle();
-        String currentUrl = homePage.getCurrentUrl();   // mới thêm
 
         Allure.addAttachment("Expected Title", expectedTitle);
         Allure.addAttachment("Actual Title", actualTitle);
-        Allure.addAttachment("Current URL", currentUrl);
 
-        softAssert.assertTrue(
-                actualTitle.equals(expectedTitle),
+        softAssert.assertEquals(
+                actualTitle,
+                expectedTitle,
                 "\nTITLE MISMATCH\n" +
                         "Expected: " + expectedTitle + "\n" +
-                        "Actual:   " + actualTitle + "\n" +
-                        "URL:      " + currentUrl + "\n"
+                        "Actual:   " + actualTitle + "\n"
         );
 
         softAssert.assertAll();
