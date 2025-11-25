@@ -12,7 +12,7 @@
         <parameter name="browser" value="chrome"/>
         <parameter name="remote" value="false"/>
         <classes>
-            <class name="testcases.DemoOpenHomePageTest"/>
+            <class name="testcases.TC_01_VerifyPurchaseTest"/>
         </classes>
     </test>
 

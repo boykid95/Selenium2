@@ -2,16 +2,16 @@ package vn.agest.selenium.elements;
 
 import io.qameta.allure.Step;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import vn.agest.selenium.core.config.SystemConfig;
 import vn.agest.selenium.core.driver.DriverManager;
 import vn.agest.selenium.core.locator.LocatorFactory;
 import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.enums.Condition;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class BaseElement {
 
@@ -53,6 +53,15 @@ public class BaseElement {
 
     // ---------------- Internal Helpers ----------------
 
+    public static List<BaseElement> listOf(By locator) {
+        LOG.debug("[LIST] Finding elements for locator: {}", locator);
+        return DriverManager.getDriver()
+                .findElements(locator)
+                .stream()
+                .map(el -> new BaseElement(locator, "ListElement: " + locator))
+                .collect(Collectors.toList());
+    }
+
     protected WebDriver driver() {
         return DriverManager.getDriver();
     }
@@ -70,6 +79,8 @@ public class BaseElement {
         return el;
     }
 
+    // ---------------- Actions ----------------
+
     public WebElement shouldBe(Condition... conditions) {
         WebElement el = null;
         for (Condition c : conditions) {
@@ -80,8 +91,6 @@ public class BaseElement {
         }
         return el;
     }
-
-    // ---------------- Actions ----------------
 
     @Step("Click on element: {this.name}")
     public void click() {
@@ -164,6 +173,8 @@ public class BaseElement {
         new Actions(driver()).moveToElement(el).perform();
     }
 
+    // ---------------- Utilities Added ----------------
+
     protected void highlight(WebElement element) {
         boolean enabled = SystemConfig.getBoolean("highlight.enabled", true);
         if (!enabled) return;
@@ -176,6 +187,27 @@ public class BaseElement {
         } catch (Exception ignore) {
         }
     }
+
+    public BaseElement findChild(By childLocator) {
+        try {
+            WebElement parent = findSafe();
+            WebElement child = parent.findElement(childLocator);
+
+            LOG.debug("[CHILD FOUND] {} -> {}", name, childLocator);
+
+            return new BaseElement(By.xpath("."), "Child of " + name) {
+                @Override
+                protected WebElement find() {
+                    return child;
+                }
+            };
+
+        } catch (NoSuchElementException e) {
+            LOG.error("[CHILD NOT FOUND] {} -> {}", name, childLocator);
+            throw e;
+        }
+    }
+
 
     // ---------------- Exposure methods ----------------
 

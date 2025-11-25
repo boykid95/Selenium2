@@ -51,6 +51,14 @@ public final class WaitHelper {
         waitDefault().until(ExpectedConditions.invisibilityOfElementLocated(locator));
     }
 
+    public static void pause(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     // ================= ADVANCED WAITS =================
 
     @Step("Wait for TEXT '{text}' in: {locator}")
@@ -75,17 +83,6 @@ public final class WaitHelper {
     public static void waitForElementCount(By locator, int expected) {
         LOG.debug("[WAIT] element-count = {} → {}", expected, locator);
         waitDefault().until(driver -> driver.findElements(locator).size() == expected);
-    }
-
-    @Step("Wait for PAGE LOAD complete")
-    public static void waitForPageLoaded() {
-        LOG.debug("[WAIT] document.readyState = complete");
-        waitDefault().until(d ->
-                "complete".equals(
-                        ((org.openqa.selenium.JavascriptExecutor) d)
-                                .executeScript("return document.readyState")
-                )
-        );
     }
 
     @Step("Wait visible & clickable: {locator}")
