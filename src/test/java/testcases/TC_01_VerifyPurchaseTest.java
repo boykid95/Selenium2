@@ -37,7 +37,7 @@ public class TC_01_VerifyPurchaseTest extends BaseTest {
         homePage.navigateToCategoryPage(ProductCategory.ELECTRONIC_COMPONENTS_SUPPLIES);
 //
 //        // ======================= STEP 4: ADD RANDOM PRODUCT TO CART ==============
-        categoryPage.addRandomProductToCart(2);
+            categoryPage.addRandomProductToCart(4);
 //
 //        // ======================= STEP 5: CLICK CART BUTTON TO OPEN SHOPPING CART PAGE ========================
 //        // ======================= STEP 6: VERIFY INFORMATION IN CART ========================

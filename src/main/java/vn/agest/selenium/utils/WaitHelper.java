@@ -59,6 +59,17 @@ public final class WaitHelper {
         }
     }
 
+    private static WebDriverWait waitShort() {
+        return new WebDriverWait(DriverManager.getDriver(),
+                Duration.ofSeconds(ConfigLoader.timeout("short")));
+    }
+
+    @Step("Short wait for VISIBLE: {locator}")
+    public static WebElement waitShortVisible(By locator) {
+        LOG.debug("[WAIT-SHORT] visible → {}", locator);
+        return waitShort().until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
     // ================= ADVANCED WAITS =================
 
     @Step("Wait for TEXT '{text}' in: {locator}")

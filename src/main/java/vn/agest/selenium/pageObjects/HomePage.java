@@ -11,6 +11,7 @@ public class HomePage extends BasePage {
     public void open() {
         super.open();
         closePopupIfPresent();
+        acceptCookieIfVisible();
     }
 }
 
