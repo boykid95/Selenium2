@@ -2,9 +2,10 @@ package vn.agest.selenium.pageObjects;
 
 import io.qameta.allure.Step;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import vn.agest.selenium.core.config.PageTitleLoader;
 import vn.agest.selenium.core.driver.DriverManager;
 import vn.agest.selenium.core.log.LoggerManager;
@@ -16,21 +17,18 @@ import vn.agest.selenium.model.PageInfo;
 import vn.agest.selenium.pageObjects.components.DepartmentMenuComponent;
 import vn.agest.selenium.utils.WaitHelper;
 
-import java.time.Duration;
+import static vn.agest.selenium.elements.BaseElement.el;
 
 public abstract class BasePage {
 
     private static final Logger LOG = LoggerManager.getLogger(BasePage.class);
-
+    private static final By COOKIE_NOTICE = By.id("cookie-notice");
+    private static final By COOKIE_ACCEPT_BUTTON = By.cssSelector("#cookie-notice .cn-set-cookie");
     protected final WebDriver driver;
     protected final PageType pageType;
     protected final PageInfo pageInfo;
-
     private final DepartmentMenuComponent departmentMenu = new DepartmentMenuComponent();
-
     private final BaseElement popupCloseButton = new BaseElement(By.cssSelector("button.pum-close:nth-child(3)"), "Popup Close Button");
-    private static final By COOKIE_NOTICE = By.id("cookie-notice");
-    private static final By COOKIE_ACCEPT_BUTTON = By.cssSelector("#cookie-notice .cn-set-cookie");
 
 
     public BasePage(PageType pageType) {
@@ -97,7 +95,6 @@ public abstract class BasePage {
         LOG.info("Checking popup visibility...");
 
         try {
-            // 🔄 Update: sử dụng WaitHelper với timeout 'short' trong config.json
             WebElement popup = WaitHelper.waitShortVisible(popupCloseButton.getLocator());
 
             if (popup != null) {
@@ -115,22 +112,19 @@ public abstract class BasePage {
     // ===================== COOKIE HANDLER =====================
     @Step("Accept cookie notice if visible")
     public void acceptCookieIfVisible() {
-        BaseElement cookieBanner = new BaseElement(COOKIE_NOTICE, "Cookie Notice Banner");
-        BaseElement acceptButton = new BaseElement(COOKIE_ACCEPT_BUTTON, "Cookie Accept Button");
+        BaseElement cookieBanner = el(COOKIE_NOTICE, "Cookie Notice Banner");
+        BaseElement acceptButton = el(COOKIE_ACCEPT_BUTTON, "Cookie Accept Button");
 
         try {
-            // 🔄 Chờ banner cookie hiển thị tối đa 'short' timeout (3s)
-            WebElement banner = WaitHelper.waitShortVisible(COOKIE_NOTICE);
+            // Dùng short wait riêng biệt (3s)
+            WebElement banner = WaitHelper.waitShortVisible(cookieBanner.getLocator());
 
-            // 🧩 Sử dụng biến banner để xác thực hiển thị
             if (banner != null && banner.isDisplayed()) {
                 LOG.info("🍪 Cookie notice detected, accepting...");
 
-                // Click an toàn (có wait visible + clickable)
                 acceptButton.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
                 acceptButton.click();
 
-                // Chờ banner biến mất
                 WaitHelper.waitForInvisible(COOKIE_NOTICE);
                 LOG.debug("✅ Cookie notice accepted.");
             } else {
@@ -142,5 +136,6 @@ public abstract class BasePage {
             LOG.warn("⚠️ Cookie notice handling skipped: {}", e.getMessage());
         }
     }
+
 
 }

@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class BaseElement {
 
     private static final Logger LOG = LoggerManager.getLogger(BaseElement.class);
-
+    private static final By SAFE_WRAPPER_LOCATOR = By.cssSelector("*");
     protected final By locator;
     protected final String name;
 
@@ -51,6 +51,23 @@ public class BaseElement {
         return LocatorFactory.css(template, args);
     }
 
+    public static BaseElement el(By locator) {
+        return new BaseElement(locator);
+    }
+
+    public static BaseElement el(By locator, String name) {
+        return new BaseElement(locator, name);
+    }
+
+    public static BaseElement el(WebElement element, String name) {
+        return new BaseElement(SAFE_WRAPPER_LOCATOR, name) {
+            @Override
+            protected WebElement find() {
+                return element;
+            }
+        };
+    }
+
     // ---------------- Internal Helpers ----------------
 
     public static List<BaseElement> listOf(By locator) {
@@ -79,6 +96,10 @@ public class BaseElement {
         return el;
     }
 
+    public WebElement getWebElement() {
+        return findSafe();
+    }
+
     // ---------------- Actions ----------------
 
     public WebElement shouldBe(Condition... conditions) {
@@ -101,9 +122,17 @@ public class BaseElement {
 
             highlight(el);
             el.click();
-        } catch (Exception ex) {
-            LOG.error("[CLICK FAILED] {} → fallback to JS click", name);
+        } catch (ElementNotInteractableException e) {
+            LOG.warn("[FALLBACK] Performing JS click due to intercepted/hidden element: {}", name);
             jsClick();
+        } catch (StaleElementReferenceException e) {
+            LOG.warn("[RETRY] Element became stale during click, retrying once → {}", name);
+            WebElement el = find();
+            highlight(el);
+            el.click();
+        } catch (Exception ex) {
+            LOG.error("[CLICK FAILED] {} → {}", name, ex.getClass().getSimpleName());
+            throw ex;
         }
     }
 
@@ -115,6 +144,7 @@ public class BaseElement {
 
             highlight(el);
             ((JavascriptExecutor) driver()).executeScript("arguments[0].click()", el);
+            LOG.warn("[JS CLICK EXECUTED] Used JS click for element: {}", name);
         } catch (Exception e) {
             LOG.error("[JS CLICK FAILED] {}", name, e);
             throw new RuntimeException("JS click failed: " + name, e);
@@ -161,7 +191,8 @@ public class BaseElement {
         if (el == null) el = find();
 
         highlight(el);
-        ((JavascriptExecutor) driver()).executeScript("arguments[0].scrollIntoView(true)", el);
+        ((JavascriptExecutor) driver()).executeScript(
+                "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'nearest'});", el);
     }
 
     @Step("Move mouse to: {this.name}")
@@ -195,19 +226,17 @@ public class BaseElement {
 
             LOG.debug("[CHILD FOUND] {} -> {}", name, childLocator);
 
-            return new BaseElement(By.xpath("."), "Child of " + name) {
+            return new BaseElement(SAFE_WRAPPER_LOCATOR, "Child of " + name) {
                 @Override
                 protected WebElement find() {
                     return child;
                 }
             };
-
         } catch (NoSuchElementException e) {
             LOG.error("[CHILD NOT FOUND] {} -> {}", name, childLocator);
             throw e;
         }
     }
-
 
     // ---------------- Exposure methods ----------------
 

@@ -7,19 +7,23 @@ import vn.agest.selenium.core.config.CredentialsLoader;
 import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.elements.BaseElement;
 import vn.agest.selenium.enums.PageType;
+import vn.agest.selenium.utils.WaitHelper;
 
 public class LoginPage extends BasePage {
 
     private static final Logger LOG = LoggerManager.getLogger(LoginPage.class);
 
-    private final BaseElement usernameField = new BaseElement(By.id("username"), "Username Field");
-    private final BaseElement passwordField = new BaseElement(By.id("password"), "Password Field");
-    private final BaseElement loginButton = new BaseElement(By.cssSelector("button[name='login']"), "Login Button");
-    private final BaseElement logoutLink = new BaseElement(By.cssSelector("a.logout"), "Logout Link");
+    // ======================= ELEMENTS =======================
+    private final BaseElement usernameField = BaseElement.el(By.id("username"), "Username Field");
+    private final BaseElement passwordField = BaseElement.el(By.id("password"), "Password Field");
+    private final BaseElement loginButton = BaseElement.el(By.cssSelector("button[name='login']"), "Login Button");
+    private final BaseElement logoutLink = BaseElement.el(By.cssSelector("a.logout"), "Logout Link");
 
     public LoginPage() {
         super(PageType.LOGIN_PAGE);
     }
+
+    // ======================= ACTIONS =======================
 
     @Step("Login with valid credentials")
     public void login() {
@@ -38,18 +42,22 @@ public class LoginPage extends BasePage {
 
     @Step("Enter username: {username}")
     private void enterUsername(String username) {
+        WaitHelper.waitForVisible(usernameField.getLocator());
+        usernameField.scrollTo();
         usernameField.setText(username);
         LOG.debug("Entered username.");
     }
 
     @Step("Enter password")
     private void enterPassword(String password) {
+        WaitHelper.waitForVisible(passwordField.getLocator());
         passwordField.setText(password);
         LOG.debug("Entered password.");
     }
 
     @Step("Click Login Button")
     private void clickLoginButton() {
+        loginButton.scrollTo();
         loginButton.click();
         LOG.debug("Clicked Login button.");
     }
