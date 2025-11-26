@@ -5,7 +5,10 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.elements.BaseElement;
+import vn.agest.selenium.enums.BillingProfile;
+import vn.agest.selenium.enums.Condition;
 import vn.agest.selenium.enums.PageType;
+import vn.agest.selenium.model.BillingInfo;
 import vn.agest.selenium.model.Product;
 import vn.agest.selenium.utils.DataHelper;
 import vn.agest.selenium.utils.LogHelper;
@@ -43,6 +46,7 @@ public class CheckoutPage extends BasePage {
     private static final By PHONE_INPUT = By.cssSelector("#billing_phone");
     private static final By EMAIL_INPUT = By.cssSelector("input#billing_email");
     private static final By COUNTRY_DROPDOWN = By.cssSelector("select2-billing_country-container");
+    private static final By COUNTRY_SEARCH_BOX = By.cssSelector("input.select2-search__field");
 
     // Payment method locators
     private static final By PAYMENT_METHOD_BANK_RADIO = By.cssSelector("#payment_method_bacs");
@@ -148,31 +152,73 @@ public class CheckoutPage extends BasePage {
     }
 
     // ===================== FILL GUEST BILLING INFO =====================
+    @Step("Fill Billing Details with Default Profile and Payment Method")
+    public BillingInfo fillBillingDetailsDefault() {
+        BillingInfo billing = BillingProfile.DEFAULT.getInfo();
+        fillBillingDetails(billing);
+        selectPaymentMethod(billing.getPaymentMethod());
+        LOG.info("💳 Payment method selected: {}", billing.getPaymentMethod());
+        return billing;
+    }
 
-//    @Step("Fill in guest billing details")
-//    public CheckoutPage fillBillingDetails(String firstName, String lastName, String address, String city,
-//                                           String postcode, String phone, String email, String country) {
-//        setInputValue(FIRST_NAME_INPUT, firstName);
-//        setInputValue(LAST_NAME_INPUT, lastName);
-//        setInputValue(STREET_INPUT, address);
-//        setInputValue(CITY_INPUT, city);
-//        setInputValue(POSTCODE_INPUT, postcode);
-//        setInputValue(PHONE_INPUT, phone);
-//        setInputValue(EMAIL_INPUT, email);
-//
-//        // Set country if necessary
-//        if (!country.isEmpty()) {
-//            el(COUNTRY_DROPDOWN).setValue(country).pressEnter();
-//        }
-//
-//        return this; // Returning this CheckoutPage instance for fluent chaining
-//    }
-//
-//    // Helper to set input field value
-//    private void setInputValue(By locator, String value) {
-//        el(locator).setValue(value);
-//    }
-//
+    @Step("Fill Billing Details form")
+    public void fillBillingDetails(BillingInfo billing) {
+        LOG.info("🧾 Filling Billing Details for: {}", billing.getFullName());
+
+        el(FIRST_NAME_INPUT, "First Name").setText(billing.getFirstName());
+        el(LAST_NAME_INPUT, "Last Name").setText(billing.getLastName());
+        el(STREET_INPUT, "Street Address").setText(billing.getStreet());
+        el(CITY_INPUT, "City").setText(billing.getCity());
+        selectCountry(billing.getCountry());
+        el(POSTCODE_INPUT, "Postcode").setText(billing.getPostcode());
+        el(PHONE_INPUT, "Phone").setText(billing.getPhone());
+        el(EMAIL_INPUT, "Email").setText(billing.getEmail());
+
+        LOG.debug("✅ Billing form filled successfully for {}", billing.getFullName());
+    }
+
+    @Step("Select country: {countryName}")
+    private void selectCountry(String countryName) {
+        LOG.info("🌍 Selecting country: {}", countryName);
+
+        // Chờ dropdown hiển thị và click vào để mở
+        el(COUNTRY_DROPDOWN, "Country dropdown").click();
+
+        // Chờ các tùy chọn trong dropdown xuất hiện
+        WaitHelper.waitForVisible(By.cssSelector("ul.select2-results__options"));
+
+        // Nhập tên quốc gia vào ô tìm kiếm
+        el(COUNTRY_SEARCH_BOX, "Country search input").setText(countryName);
+
+        // Chờ quốc gia hiển thị trong dropdown
+        $x(String.format("//li[contains(@class,'select2-results__option') and normalize-space()='%s']", countryName))
+                .shouldBe(Condition.VISIBLE);
+
+        // Chọn quốc gia từ danh sách
+        $x(String.format("//li[contains(@class,'select2-results__option') and normalize-space()='%s']", countryName)).click();
+
+        LOG.debug("✅ Country selected successfully: {}", countryName);
+    }
+
+
+    // ===================== SELECT PAYMENT METHOD =====================
+
+    @Step("Select payment method: {method}")
+    private void selectPaymentMethod(String method) {
+        String methodLower = method.toLowerCase();
+
+        if (methodLower.contains("bank")) {
+            el(PAYMENT_METHOD_BANK_RADIO, "Direct Bank Transfer Option").click();
+            LOG.debug("🏦 Selected 'Direct Bank Transfer'");
+        } else if (methodLower.contains("cod") || methodLower.contains("delivery")) {
+            el(PAYMENT_METHOD_COD_RADIO, "Cash on Delivery Option").click();
+            LOG.debug("💵 Selected 'Cash on Delivery'");
+        } else {
+            LOG.error("❌ Unsupported payment method: {}", method);
+            throw new IllegalArgumentException("Unsupported payment method: " + method);
+        }
+    }
+
 //    // ===================== VERIFY ORDER ITEM DETAILS =====================
 //
 //    @Step("Verify item details on Checkout page match selected product")
@@ -208,22 +254,8 @@ public class CheckoutPage extends BasePage {
 //        el(LOADING_OVERLAY).shouldNotBe(Condition.visible);
 //    }
 //
-//    // ===================== SELECT PAYMENT METHOD =====================
-//
-//    @Step("Select payment method: {method}")
-//    public void selectPaymentMethod(PaymentMethod method) {
-//        switch (method) {
-//            case BANK:
-//                el(PAYMENT_METHOD_BANK_RADIO).click();
-//                break;
-//            case COD:
-//                el(PAYMENT_METHOD_COD_RADIO).click();
-//                break;
-//            default:
-//                throw new IllegalArgumentException("Unsupported payment method: " + method);
-//        }
-//    }
-//
+
+
 //    // ===================== UTILITY METHOD =====================
 //
 //    private double parsePrice(String priceText) {

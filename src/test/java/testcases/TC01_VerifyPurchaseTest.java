@@ -5,6 +5,7 @@ import io.qameta.allure.Description;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 import vn.agest.selenium.enums.ProductCategory;
+import vn.agest.selenium.model.BillingInfo;
 import vn.agest.selenium.model.Product;
 import vn.agest.selenium.pageObjects.*;
 
@@ -68,8 +69,8 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
 //
 ////        AllureHelper.attachScreenshot("STEP 9 - Verify checkout product details");
 //
-//        // ======================= STEP 10: FILL BILLING INFO WITH DEFAULT PAYMENT METHOD =========
-//        BillingInfo expectedBillingInfo = checkoutPage.fillBillingDetailsDefault();
+        // ======================= STEP 10: FILL BILLING INFO WITH DEFAULT PAYMENT METHOD =========
+        BillingInfo expectedBillingInfo = checkoutPage.fillBillingDetailsDefault();
 //
 //        // ======================= STEP 11: CLICK 'PLACE ORDER' =====================
 //        // ======================= STEP 12: VERIFY ORDER STATUS PAGE ===============
