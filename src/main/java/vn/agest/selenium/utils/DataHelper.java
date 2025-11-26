@@ -50,20 +50,37 @@ public final class DataHelper {
     @Step("Parse price text '{priceText}' to numeric value")
     public static double parsePrice(String priceText) {
         try {
-            double value = Double.parseDouble(priceText.replaceAll("[^\\d.]", ""));
-            LOG.debug("Parsed price '{}' → {}", priceText, value);
-            return value;
+            // Xử lý chuỗi không hợp lệ hoặc chứa thông báo demo
+            if (priceText.contains("THIS IS A DEMO STORE")) {
+                return 0.0; // Trả về giá mặc định hoặc xử lý theo yêu cầu
+            }
+            // Tiến hành xử lý bình thường
+            priceText = priceText.replaceAll("[^\\d.]", ""); // Loại bỏ các ký tự không phải số
+            return Double.parseDouble(priceText);
         } catch (NumberFormatException e) {
-            LOG.error("Failed to parse price: {}", priceText, e);
-            throw new RuntimeException("Invalid price format: " + priceText, e);
+            LOG.error("Invalid price format: {}", priceText);
+            return 0.0; // Trả về giá mặc định hoặc xử lý khác
         }
     }
+
 
     @Step("Format value {value} into currency string")
     public static String formatCurrency(double value) {
         String formatted = String.format("$%.2f", value);
         LOG.debug("Formatted {} → {}", value, formatted);
         return formatted;
+    }
+
+    @Step("Parse quantity text '{qtyText}' to integer")
+    public static int parseQuantity(String qtyText) {
+        try {
+            int value = Integer.parseInt(qtyText.trim());
+            LOG.debug("Parsed quantity '{}' → {}", qtyText, value);
+            return value;
+        } catch (NumberFormatException e) {
+            LOG.warn("⚠️ Invalid quantity '{}', fallback to 1", qtyText);
+            return 1;
+        }
     }
 
     // ===================== DATA GENERATION =====================

@@ -17,6 +17,9 @@ import vn.agest.selenium.model.PageInfo;
 import vn.agest.selenium.pageObjects.components.DepartmentMenuComponent;
 import vn.agest.selenium.utils.WaitHelper;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static vn.agest.selenium.elements.BaseElement.el;
 
 public abstract class BasePage {
@@ -29,7 +32,6 @@ public abstract class BasePage {
     protected final PageInfo pageInfo;
     private final DepartmentMenuComponent departmentMenu = new DepartmentMenuComponent();
     private final BaseElement popupCloseButton = new BaseElement(By.cssSelector("button.pum-close:nth-child(3)"), "Popup Close Button");
-
 
     public BasePage(PageType pageType) {
         this.driver = DriverManager.getDriver();
@@ -116,7 +118,6 @@ public abstract class BasePage {
         BaseElement acceptButton = el(COOKIE_ACCEPT_BUTTON, "Cookie Accept Button");
 
         try {
-            // Dùng short wait riêng biệt (3s)
             WebElement banner = WaitHelper.waitShortVisible(cookieBanner.getLocator());
 
             if (banner != null && banner.isDisplayed()) {
@@ -137,5 +138,22 @@ public abstract class BasePage {
         }
     }
 
+    @Step("Get all BaseElements for locator: {locator}")
+    protected List<BaseElement> getAllElements(By locator, String elementName) {
+        LOG.debug("🔍 Fetching list of elements for: {}", elementName);
+        WaitHelper.waitForVisible(locator);
 
+        List<BaseElement> elements = driver.findElements(locator)
+                .stream()
+                .map(e -> BaseElement.el(e, elementName))
+                .collect(Collectors.toList());
+
+        if (elements.isEmpty()) {
+            LOG.error("❌ No elements found for: {}", elementName);
+            throw new IllegalStateException("No elements found for: " + elementName);
+        }
+
+        LOG.debug("✅ Found {} element(s) for: {}", elements.size(), elementName);
+        return elements;
+    }
 }

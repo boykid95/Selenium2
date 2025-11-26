@@ -10,6 +10,7 @@ import vn.agest.selenium.core.locator.LocatorFactory;
 import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.enums.Condition;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,15 +70,6 @@ public class BaseElement {
     }
 
     // ---------------- Internal Helpers ----------------
-
-    public static List<BaseElement> listOf(By locator) {
-        LOG.debug("[LIST] Finding elements for locator: {}", locator);
-        return DriverManager.getDriver()
-                .findElements(locator)
-                .stream()
-                .map(el -> new BaseElement(locator, "ListElement: " + locator))
-                .collect(Collectors.toList());
-    }
 
     protected WebDriver driver() {
         return DriverManager.getDriver();
@@ -158,7 +150,7 @@ public class BaseElement {
 
     @Step("Set text '{text}' into: {this.name}")
     public void setText(String text) {
-        LOG.info("[SET TEXT] {} → '{}'", name, text);
+        LOG.debug("[SET TEXT] {} → '{}'", name, text);
 
         WebElement el = shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
         if (el == null) el = find();
@@ -166,6 +158,22 @@ public class BaseElement {
         highlight(el);
         el.clear();
         el.sendKeys(text);
+    }
+
+    @Step("Get attribute '{attribute}' of: {this.name}")
+    public String getAttribute(String attribute) {
+        WebElement el = findSafe();
+        String value = el.getAttribute(attribute);
+        LOG.debug("[ATTRIBUTE] {} = '{}' → {}", attribute, value, name);
+        return value;
+    }
+
+    @Step("Get CSS value '{cssProperty}' of: {this.name}")
+    public String getCssValue(String cssProperty) {
+        WebElement el = findSafe();
+        String value = el.getCssValue(cssProperty);
+        LOG.debug("[CSS] {} = '{}' → {}", cssProperty, value, name);
+        return value;
     }
 
     public boolean isDisplayed() {
@@ -233,9 +241,30 @@ public class BaseElement {
                 }
             };
         } catch (NoSuchElementException e) {
-            LOG.error("[CHILD NOT FOUND] {} -> {}", name, childLocator);
+            LOG.warn("[CHILD NOT FOUND] {} -> {}", name, childLocator);
             throw e;
         }
+    }
+
+    @Step("Find all child elements {childLocator} inside: {this.name}")
+    public List<WebElement> findElements(By childLocator) {
+        try {
+            WebElement parent = findSafe();
+            List<WebElement> children = parent.findElements(childLocator);
+            LOG.debug("[CHILDREN FOUND] {} -> {} ({} elements)", name, childLocator, children.size());
+            return children;
+        } catch (NoSuchElementException e) {
+            LOG.error("[CHILDREN NOT FOUND] {} -> {}", name, childLocator);
+            return new ArrayList<>();
+        }
+    }
+
+    @Step("Find all BaseElements by child locator {childLocator} inside: {this.name}")
+    public List<BaseElement> findBaseElements(By childLocator) {
+        List<WebElement> children = findElements(childLocator);
+        return children.stream()
+                .map(el -> BaseElement.el(el, "Child of " + name))
+                .collect(Collectors.toList());
     }
 
     // ---------------- Exposure methods ----------------
