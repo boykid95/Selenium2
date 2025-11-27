@@ -37,7 +37,7 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
         homePage.navigateToCategoryPage(ProductCategory.ELECTRONIC_COMPONENTS_SUPPLIES);
 
         // ======================= STEP 4: ADD RANDOM PRODUCT TO CART ==============
-        List<Product> selectedProducts = categoryPage.addRandomProductsToCart(4);
+        List<Product> selectedProducts = categoryPage.addRandomProductsToCart(10);
 
         // ======================= STEP 5: CLICK CART BUTTON TO OPEN SHOPPING CART PAGE ========================
         // ======================= STEP 6: VERIFY INFORMATION IN CART ========================
@@ -71,6 +71,7 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
 //
         // ======================= STEP 10: FILL BILLING INFO WITH DEFAULT PAYMENT METHOD =========
         BillingInfo expectedBillingInfo = checkoutPage.fillBillingDetailsDefault();
+        System.out.println("Expected Billing Info: " + expectedBillingInfo);
 //
 //        // ======================= STEP 11: CLICK 'PLACE ORDER' =====================
 //        // ======================= STEP 12: VERIFY ORDER STATUS PAGE ===============

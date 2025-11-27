@@ -15,6 +15,7 @@ import vn.agest.selenium.enums.PageType;
 import vn.agest.selenium.enums.ProductCategory;
 import vn.agest.selenium.model.PageInfo;
 import vn.agest.selenium.pageObjects.components.DepartmentMenuComponent;
+import vn.agest.selenium.utils.LocatorHelper;
 import vn.agest.selenium.utils.WaitHelper;
 
 import java.util.List;
@@ -80,14 +81,14 @@ public abstract class BasePage {
         return title;
     }
 
-    // ===================== ELEMENT HELPERS =====================
+// ===================== DYNAMIC ELEMENT UTILITIES =====================
 
-    protected BaseElement $x(String template, Object... args) {
-        return BaseElement.xpath(template, args);
+    protected BaseElement getDynamicElement(String locatorTemplate, Object... args) {
+        return LocatorHelper.getDynamicLocator(locatorTemplate, args);
     }
 
-    protected BaseElement $c(String template, Object... args) {
-        return BaseElement.css(template, args);
+    protected By getDynamicBy(String locatorTemplate, Object... args) {
+        return LocatorHelper.getDynamicBy(locatorTemplate, args);
     }
 
     // ===================== COMMON POPUP HANDLER =====================

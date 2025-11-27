@@ -45,8 +45,11 @@ public class CheckoutPage extends BasePage {
     private static final By POSTCODE_INPUT = By.cssSelector("input#billing_postcode");
     private static final By PHONE_INPUT = By.cssSelector("#billing_phone");
     private static final By EMAIL_INPUT = By.cssSelector("input#billing_email");
-    private static final By COUNTRY_DROPDOWN = By.cssSelector("select2-billing_country-container");
+    private static final By COUNTRY_DROPDOWN = By.id("select2-billing_country-container");
     private static final By COUNTRY_SEARCH_BOX = By.cssSelector("input.select2-search__field");
+    private static final By COUNTRY_RESULTS = By.cssSelector("ul.select2-results__options");
+    private static final String COUNTRY_OPTION_XPATH =
+            "//li[contains(@class,'select2-results__option') and normalize-space()='%s']";
 
     // Payment method locators
     private static final By PAYMENT_METHOD_BANK_RADIO = By.cssSelector("#payment_method_bacs");
@@ -68,9 +71,9 @@ public class CheckoutPage extends BasePage {
 
         boolean isTitleCorrect = actualTitle.contains(expectedTitle);
         if (isTitleCorrect) {
-            LOG.info("✅ Checkout page loaded successfully with correct title.");
+            LOG.info("Checkout page loaded successfully with correct title.");
         } else {
-            LOG.error("❌ Checkout page title mismatch. Expected: '{}' but got: '{}'", expectedTitle, actualTitle);
+            LOG.error("Checkout page title mismatch. Expected: '{}' but got: '{}'", expectedTitle, actualTitle);
         }
 
         return isTitleCorrect;
@@ -84,8 +87,8 @@ public class CheckoutPage extends BasePage {
         List<BaseElement> checkoutRows = getAllCheckoutRows();
         List<Product> products = extractCheckoutProducts(checkoutRows);
 
-        LogHelper.logProductList("📦 Extracted checkout products", products);
-        LOG.info("✅ Found {} product(s) on Checkout page.", products.size());
+        LogHelper.logProductList("Extracted checkout products", products);
+        LOG.info("Found {} product(s) on Checkout page.", products.size());
         return products;
     }
 
@@ -106,7 +109,7 @@ public class CheckoutPage extends BasePage {
             Product product = new Product(name, price, quantity);
             products.add(product);
 
-            LOG.debug("🧾 Checkout item: '{}' | Qty: {} | Price: {}", name, quantity, price);
+            LOG.debug("Checkout item: '{}' | Qty: {} | Price: {}", name, quantity, price);
         }
         return products;
     }
@@ -139,7 +142,7 @@ public class CheckoutPage extends BasePage {
     public double getSubtotal() {
         String subtotalText = el(SUBTOTAL_PRICE).getText().trim();
         double subtotal = DataHelper.parsePrice(subtotalText);
-        LOG.info("💰 Subtotal: {}", subtotal);
+        LOG.info("Subtotal: {}", subtotal);
         return subtotal;
     }
 
@@ -147,7 +150,7 @@ public class CheckoutPage extends BasePage {
     public double getTotal() {
         String totalText = el(TOTAL_PRICE).getText().trim();
         double total = DataHelper.parsePrice(totalText);
-        LOG.info("💰 Total: {}", total);
+        LOG.info("Total: {}", total);
         return total;
     }
 
@@ -157,7 +160,7 @@ public class CheckoutPage extends BasePage {
         BillingInfo billing = BillingProfile.DEFAULT.getInfo();
         fillBillingDetails(billing);
         selectPaymentMethod(billing.getPaymentMethod());
-        LOG.info("💳 Payment method selected: {}", billing.getPaymentMethod());
+        LOG.info("Payment method selected: {}", billing.getPaymentMethod());
         return billing;
     }
 
@@ -174,32 +177,28 @@ public class CheckoutPage extends BasePage {
         el(PHONE_INPUT, "Phone").setText(billing.getPhone());
         el(EMAIL_INPUT, "Email").setText(billing.getEmail());
 
-        LOG.debug("✅ Billing form filled successfully for {}", billing.getFullName());
+        LOG.debug("Billing form filled successfully for {}", billing.getFullName());
     }
 
     @Step("Select country: {countryName}")
     private void selectCountry(String countryName) {
         LOG.info("🌍 Selecting country: {}", countryName);
 
-        // Chờ dropdown hiển thị và click vào để mở
-        el(COUNTRY_DROPDOWN, "Country dropdown").click();
+        BaseElement countryDropdown = el(COUNTRY_DROPDOWN, "Country dropdown");
+        countryDropdown.scrollTo();
+        countryDropdown.click();
 
-        // Chờ các tùy chọn trong dropdown xuất hiện
-        WaitHelper.waitForVisible(By.cssSelector("ul.select2-results__options"));
+        WaitHelper.waitForVisible(COUNTRY_SEARCH_BOX);
+        WaitHelper.waitForVisible(COUNTRY_RESULTS);
 
-        // Nhập tên quốc gia vào ô tìm kiếm
         el(COUNTRY_SEARCH_BOX, "Country search input").setText(countryName);
 
-        // Chờ quốc gia hiển thị trong dropdown
-        $x(String.format("//li[contains(@class,'select2-results__option') and normalize-space()='%s']", countryName))
-                .shouldBe(Condition.VISIBLE);
+        BaseElement countryOption = getDynamicElement(COUNTRY_OPTION_XPATH, countryName);
+        countryOption.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
+        countryOption.click();
 
-        // Chọn quốc gia từ danh sách
-        $x(String.format("//li[contains(@class,'select2-results__option') and normalize-space()='%s']", countryName)).click();
-
-        LOG.debug("✅ Country selected successfully: {}", countryName);
+        LOG.debug("Country selected successfully: {}", countryName);
     }
-
 
     // ===================== SELECT PAYMENT METHOD =====================
 
@@ -209,10 +208,10 @@ public class CheckoutPage extends BasePage {
 
         if (methodLower.contains("bank")) {
             el(PAYMENT_METHOD_BANK_RADIO, "Direct Bank Transfer Option").click();
-            LOG.debug("🏦 Selected 'Direct Bank Transfer'");
+            LOG.debug("Selected 'Direct Bank Transfer'");
         } else if (methodLower.contains("cod") || methodLower.contains("delivery")) {
             el(PAYMENT_METHOD_COD_RADIO, "Cash on Delivery Option").click();
-            LOG.debug("💵 Selected 'Cash on Delivery'");
+            LOG.debug("Selected 'Cash on Delivery'");
         } else {
             LOG.error("❌ Unsupported payment method: {}", method);
             throw new IllegalArgumentException("Unsupported payment method: " + method);
