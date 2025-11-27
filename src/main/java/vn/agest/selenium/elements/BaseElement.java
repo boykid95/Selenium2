@@ -2,10 +2,7 @@ package vn.agest.selenium.elements;
 
 import io.qameta.allure.Step;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import vn.agest.selenium.core.config.SystemConfig;
 import vn.agest.selenium.core.driver.DriverManager;
@@ -13,10 +10,14 @@ import vn.agest.selenium.core.locator.LocatorFactory;
 import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.enums.Condition;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class BaseElement {
 
     private static final Logger LOG = LoggerManager.getLogger(BaseElement.class);
-
+    private static final By SAFE_WRAPPER_LOCATOR = By.cssSelector("*");
     protected final By locator;
     protected final String name;
 
@@ -51,6 +52,23 @@ public class BaseElement {
         return LocatorFactory.css(template, args);
     }
 
+    public static BaseElement el(By locator) {
+        return new BaseElement(locator);
+    }
+
+    public static BaseElement el(By locator, String name) {
+        return new BaseElement(locator, name);
+    }
+
+    public static BaseElement el(WebElement element, String name) {
+        return new BaseElement(SAFE_WRAPPER_LOCATOR, name) {
+            @Override
+            protected WebElement find() {
+                return element;
+            }
+        };
+    }
+
     // ---------------- Internal Helpers ----------------
 
     protected WebDriver driver() {
@@ -70,6 +88,12 @@ public class BaseElement {
         return el;
     }
 
+    public WebElement getWebElement() {
+        return findSafe();
+    }
+
+    // ---------------- Actions ----------------
+
     public WebElement shouldBe(Condition... conditions) {
         WebElement el = null;
         for (Condition c : conditions) {
@@ -81,8 +105,6 @@ public class BaseElement {
         return el;
     }
 
-    // ---------------- Actions ----------------
-
     @Step("Click on element: {this.name}")
     public void click() {
         LOG.debug("[CLICK] {}", name);
@@ -92,9 +114,17 @@ public class BaseElement {
 
             highlight(el);
             el.click();
-        } catch (Exception ex) {
-            LOG.error("[CLICK FAILED] {} → fallback to JS click", name);
+        } catch (ElementNotInteractableException e) {
+            LOG.warn("[FALLBACK] Performing JS click due to intercepted/hidden element: {}", name);
             jsClick();
+        } catch (StaleElementReferenceException e) {
+            LOG.warn("[RETRY] Element became stale during click, retrying once → {}", name);
+            WebElement el = find();
+            highlight(el);
+            el.click();
+        } catch (Exception ex) {
+            LOG.error("[CLICK FAILED] {} → {}", name, ex.getClass().getSimpleName());
+            throw ex;
         }
     }
 
@@ -106,6 +136,7 @@ public class BaseElement {
 
             highlight(el);
             ((JavascriptExecutor) driver()).executeScript("arguments[0].click()", el);
+            LOG.warn("[JS CLICK EXECUTED] Used JS click for element: {}", name);
         } catch (Exception e) {
             LOG.error("[JS CLICK FAILED] {}", name, e);
             throw new RuntimeException("JS click failed: " + name, e);
@@ -119,7 +150,7 @@ public class BaseElement {
 
     @Step("Set text '{text}' into: {this.name}")
     public void setText(String text) {
-        LOG.info("[SET TEXT] {} → '{}'", name, text);
+        LOG.debug("[SET TEXT] {} → '{}'", name, text);
 
         WebElement el = shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
         if (el == null) el = find();
@@ -127,6 +158,42 @@ public class BaseElement {
         highlight(el);
         el.clear();
         el.sendKeys(text);
+    }
+
+    @Step("Get 'value' attribute of: {this.name}")
+    public String getValue() {
+        try {
+            WebElement el = findSafe();
+            String value = el.getAttribute("value");
+
+            if (value == null) {
+                LOG.debug("⚠️ getValue() returned null for element: {}", this.name);
+                return "";
+            }
+
+            LOG.trace("[GET VALUE] {} → '{}'", this.name, value);
+            return value.trim();
+
+        } catch (Exception e) {
+            LOG.warn("⚠️ Failed to get value for element '{}': {}", this.name, e.getMessage());
+            return "";
+        }
+    }
+
+    @Step("Get attribute '{attribute}' of: {this.name}")
+    public String getAttribute(String attribute) {
+        WebElement el = findSafe();
+        String value = el.getAttribute(attribute);
+        LOG.debug("[ATTRIBUTE] {} = '{}' → {}", attribute, value, name);
+        return value;
+    }
+
+    @Step("Get CSS value '{cssProperty}' of: {this.name}")
+    public String getCssValue(String cssProperty) {
+        WebElement el = findSafe();
+        String value = el.getCssValue(cssProperty);
+        LOG.debug("[CSS] {} = '{}' → {}", cssProperty, value, name);
+        return value;
     }
 
     public boolean isDisplayed() {
@@ -147,12 +214,14 @@ public class BaseElement {
     }
 
     @Step("Scroll into view: {this.name}")
-    public void scrollTo() {
+    public BaseElement scrollTo() {
         WebElement el = shouldBe(Condition.VISIBLE);
         if (el == null) el = find();
 
         highlight(el);
-        ((JavascriptExecutor) driver()).executeScript("arguments[0].scrollIntoView(true)", el);
+        ((JavascriptExecutor) driver()).executeScript(
+                "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'nearest'});", el);
+        return this;
     }
 
     @Step("Move mouse to: {this.name}")
@@ -163,6 +232,8 @@ public class BaseElement {
         highlight(el);
         new Actions(driver()).moveToElement(el).perform();
     }
+
+    // ---------------- Utilities Added ----------------
 
     protected void highlight(WebElement element) {
         boolean enabled = SystemConfig.getBoolean("highlight.enabled", true);
@@ -177,6 +248,55 @@ public class BaseElement {
         }
     }
 
+    public BaseElement findChild(By childLocator) {
+        try {
+            WebElement parent = findSafe();
+            WebElement child = parent.findElement(childLocator);
+
+            LOG.debug("[CHILD FOUND] {} -> {}", name, childLocator);
+
+            return new BaseElement(SAFE_WRAPPER_LOCATOR, "Child of " + name) {
+                @Override
+                protected WebElement find() {
+                    return child;
+                }
+            };
+        } catch (NoSuchElementException e) {
+            LOG.warn("[CHILD NOT FOUND] {} -> {}", name, childLocator);
+            throw e;
+        }
+    }
+
+    @Step("Find all child elements {childLocator} inside: {this.name}")
+    public List<WebElement> findElements(By childLocator) {
+        try {
+            WebElement parent = findSafe();
+            List<WebElement> children = parent.findElements(childLocator);
+            LOG.debug("[CHILDREN FOUND] {} -> {} ({} elements)", name, childLocator, children.size());
+            return children;
+        } catch (NoSuchElementException e) {
+            LOG.error("[CHILDREN NOT FOUND] {} -> {}", name, childLocator);
+            return new ArrayList<>();
+        }
+    }
+
+    @Step("Find all BaseElements by child locator {childLocator} inside: {this.name}")
+    public List<BaseElement> findBaseElements(By childLocator) {
+        List<WebElement> children = findElements(childLocator);
+        return children.stream()
+                .map(el -> BaseElement.el(el, "Child of " + name))
+                .collect(Collectors.toList());
+    }
+
+    @Step("Clear existing text and set new value '{text}' in: {this.name}")
+    public void clearAndSetText(String text) {
+        WebElement el = findSafe();
+        highlight(el);
+        el.clear();
+        el.sendKeys(text);
+        LOG.debug("[SET TEXT] {} = '{}'", name, text);
+    }
+
     // ---------------- Exposure methods ----------------
 
     public By getLocator() {
@@ -186,4 +306,5 @@ public class BaseElement {
     public String getName() {
         return name;
     }
+
 }
