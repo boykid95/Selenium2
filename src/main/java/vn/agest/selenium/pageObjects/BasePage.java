@@ -98,7 +98,7 @@ public abstract class BasePage {
         LOG.info("Checking popup visibility...");
 
         try {
-            WebElement popup = WaitHelper.waitShortVisible(popupCloseButton.getLocator());
+            WebElement popup = WaitHelper.shortVisible(popupCloseButton.getLocator());
 
             if (popup != null) {
                 popupCloseButton.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
@@ -119,7 +119,7 @@ public abstract class BasePage {
         BaseElement acceptButton = el(COOKIE_ACCEPT_BUTTON, "Cookie Accept Button");
 
         try {
-            WebElement banner = WaitHelper.waitShortVisible(cookieBanner.getLocator());
+            WebElement banner = WaitHelper.shortVisible(cookieBanner.getLocator());
 
             if (banner != null && banner.isDisplayed()) {
                 LOG.info("🍪 Cookie notice detected, accepting...");

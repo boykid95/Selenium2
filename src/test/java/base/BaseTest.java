@@ -37,7 +37,7 @@ public abstract class BaseTest {
 
     @AfterMethod(alwaysRun = true)
     public void tearDown(ITestResult result) {
-        WaitHelper.pause(2000);
+        WaitHelper.pause(2000); // will be removed in future
         DriverManager.quitDriver();
     }
 }

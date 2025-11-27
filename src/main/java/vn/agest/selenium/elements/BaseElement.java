@@ -160,6 +160,26 @@ public class BaseElement {
         el.sendKeys(text);
     }
 
+    @Step("Get 'value' attribute of: {this.name}")
+    public String getValue() {
+        try {
+            WebElement el = findSafe();
+            String value = el.getAttribute("value");
+
+            if (value == null) {
+                LOG.debug("⚠️ getValue() returned null for element: {}", this.name);
+                return "";
+            }
+
+            LOG.trace("[GET VALUE] {} → '{}'", this.name, value);
+            return value.trim();
+
+        } catch (Exception e) {
+            LOG.warn("⚠️ Failed to get value for element '{}': {}", this.name, e.getMessage());
+            return "";
+        }
+    }
+
     @Step("Get attribute '{attribute}' of: {this.name}")
     public String getAttribute(String attribute) {
         WebElement el = findSafe();
@@ -194,13 +214,14 @@ public class BaseElement {
     }
 
     @Step("Scroll into view: {this.name}")
-    public void scrollTo() {
+    public BaseElement scrollTo() {
         WebElement el = shouldBe(Condition.VISIBLE);
         if (el == null) el = find();
 
         highlight(el);
         ((JavascriptExecutor) driver()).executeScript(
                 "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'nearest'});", el);
+        return this;
     }
 
     @Step("Move mouse to: {this.name}")
@@ -267,6 +288,15 @@ public class BaseElement {
                 .collect(Collectors.toList());
     }
 
+    @Step("Clear existing text and set new value '{text}' in: {this.name}")
+    public void clearAndSetText(String text) {
+        WebElement el = findSafe();
+        highlight(el);
+        el.clear();
+        el.sendKeys(text);
+        LOG.debug("[SET TEXT] {} = '{}'", name, text);
+    }
+
     // ---------------- Exposure methods ----------------
 
     public By getLocator() {
@@ -276,4 +306,5 @@ public class BaseElement {
     public String getName() {
         return name;
     }
+
 }

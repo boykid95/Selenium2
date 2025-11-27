@@ -29,7 +29,7 @@ public abstract class CatalogPage extends BasePage {
             By.xpath("//div[@class='et-loader']");
     protected static final By VIEW_CART_BUTTON =
             By.xpath("//div[@class='header-wrapper']//div[contains(@class,'header-cart')]/a[contains(@href,'/cart')]");
-    protected static final By DISCOUNTED_PRICE = By.cssSelector(".products .price ins .amount");  // Giá giảm
+    protected static final By DISCOUNTED_PRICE = By.cssSelector(".products .price ins .amount");
     protected static final By NORMAL_PRICE = By.cssSelector(".products .price .amount");
 
     private static final Logger LOG = LoggerManager.getLogger(CatalogPage.class);
@@ -103,28 +103,43 @@ public abstract class CatalogPage extends BasePage {
         try {
             WaitHelper.waitForPresence(LOADER);
             WaitHelper.waitForInvisible(LOADER);
-            LOG.debug("✅ Loader disappeared successfully.");
+            LOG.debug("Loader disappeared successfully.");
         } catch (Exception e) {
-            LOG.debug("⚡ Loader not found or already gone.");
+            LOG.debug("Loader not found or already gone.");
         }
     }
 
-    @Step("Add {count} random product(s) to cart")
+    @Step("Add {count} random product(s) to cart (duplicates allowed)")
     public List<Product> addRandomProductsToCart(int count) {
-        LOG.info("🛍 Adding {} random product(s) to cart...", count);
+        LOG.info("🛒 Adding {} random product(s) to cart (duplicates allowed)...", count);
 
+        WaitHelper.waitForVisible(PRODUCT_ITEMS);
         List<BaseElement> products = getAllProducts();
-        List<Integer> indexes = DataHelper.getRandomIndexes(products.size(), count);
+        int totalAvailable = products.size();
 
-        List<Product> selectedProducts = new ArrayList<>();
-        for (Integer i : indexes) {
-            selectProductByIndex(products, i);
-            clickAddToCartButton();
-            selectedProducts.add(selectedProduct);
+        if (totalAvailable == 0) {
+            LOG.error("❌ No products found on catalog page!");
+            throw new IllegalStateException("No products available to add to cart");
         }
 
-        LOG.info("✅ Added {} product(s) to cart", selectedProducts.size());
-        return selectedProducts;
+        LOG.debug("✅ Found {} products → duplicates allowed", totalAvailable);
+        List<Product> addedProducts = new ArrayList<>();
+
+        for (int i = 1; i <= count; i++) {
+            try {
+                int randomIndex = DataHelper.getRandomNumber(0, totalAvailable - 1);
+                selectProductByIndex(products, randomIndex);
+
+                clickAddToCartButton();
+                addedProducts.add(selectedProduct);
+
+            } catch (Exception e) {
+                LOG.warn("⚠️ Failed to add product #{}: {}", i, e.getMessage());
+            }
+        }
+
+        LOG.info("✅ Added {} product(s) to cart", addedProducts.size());
+        return addedProducts;
     }
 
     @Step("Navigate to Shopping Cart page via View Cart button")

@@ -12,6 +12,19 @@ import vn.agest.selenium.core.log.LoggerManager;
 
 import java.time.Duration;
 
+/**
+ * WaitHelper - centralized utility for all explicit waits.
+ * Supports dynamic timeout configuration via config.json:
+ * {
+ * "timeouts": {
+ * "short": 3,
+ * "explicit": 10,
+ * "long": 20
+ * }
+ * }
+ * <p>
+ * Designed for: stability, reusability, and CI/CD resilience.
+ */
 public final class WaitHelper {
 
     private static final Logger LOG = LoggerManager.getLogger(WaitHelper.class);
@@ -19,13 +32,37 @@ public final class WaitHelper {
     private WaitHelper() {
     }
 
-    // ================= CORE WAIT =================
+    // ================= CORE WAIT FACTORIES =================
+
     private static WebDriverWait waitDefault() {
-        int timeout = ConfigLoader.timeout("explicit");
-        return new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(timeout));
+        return new WebDriverWait(
+                DriverManager.getDriver(),
+                Duration.ofSeconds(ConfigLoader.timeout("explicit", 10))
+        );
+    }
+
+    private static WebDriverWait waitShort() {
+        return new WebDriverWait(
+                DriverManager.getDriver(),
+                Duration.ofSeconds(ConfigLoader.timeout("short", 3))
+        );
+    }
+
+    private static WebDriverWait waitLong() {
+        return new WebDriverWait(
+                DriverManager.getDriver(),
+                Duration.ofSeconds(ConfigLoader.timeout("long", 20))
+        );
     }
 
     // ================= BASIC WAITS =================
+
+    @Step("Wait for VISIBLE: {locator} (timeout={timeout}s)")
+    public static WebElement waitForVisible(By locator, int timeout) {
+        LOG.debug("[WAIT:{}s] visible → {}", timeout, locator);
+        return new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(timeout))
+                .until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
 
     @Step("Wait for VISIBLE: {locator}")
     public static WebElement waitForVisible(By locator) {
@@ -45,34 +82,23 @@ public final class WaitHelper {
         return waitDefault().until(ExpectedConditions.presenceOfElementLocated(locator));
     }
 
+    // ================= INVISIBLE =================
+
+    @Step("Wait for INVISIBLE: {locator} (timeout={timeout}s)")
+    public static void waitForInvisible(By locator, int timeout) {
+        LOG.debug("[WAIT:{}s] invisible → {}", timeout, locator);
+        new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(timeout))
+                .until(ExpectedConditions.invisibilityOfElementLocated(locator));
+    }
+
     @Step("Wait for INVISIBLE: {locator}")
     public static void waitForInvisible(By locator) {
-        LOG.debug("[WAIT] invisible → {}", locator);
-        waitDefault().until(ExpectedConditions.invisibilityOfElementLocated(locator));
-    }
-
-    public static void pause(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private static WebDriverWait waitShort() {
-        return new WebDriverWait(DriverManager.getDriver(),
-                Duration.ofSeconds(ConfigLoader.timeout("short")));
-    }
-
-    @Step("Short wait for VISIBLE: {locator}")
-    public static WebElement waitShortVisible(By locator) {
-        LOG.debug("[WAIT-SHORT] visible → {}", locator);
-        return waitShort().until(ExpectedConditions.visibilityOfElementLocated(locator));
+        waitForInvisible(locator, ConfigLoader.timeout("explicit", 10));
     }
 
     // ================= ADVANCED WAITS =================
 
-    @Step("Wait for TEXT '{text}' in: {locator}")
+    @Step("Wait for TEXT '{text}' in {locator}")
     public static void waitForText(By locator, String text) {
         LOG.debug("[WAIT] text '{}' → {}", text, locator);
         waitDefault().until(ExpectedConditions.textToBePresentInElementLocated(locator, text));
@@ -101,5 +127,36 @@ public final class WaitHelper {
         LOG.debug("[WAIT] visible & clickable → {}", locator);
         waitForVisible(locator);
         return waitForClickable(locator);
+    }
+
+    // ================= SHORTCUTS =================
+
+    @Step("Short wait for VISIBLE: {locator}")
+    public static WebElement shortVisible(By locator) {
+        LOG.debug("[WAIT-SHORT] visible → {}", locator);
+        return waitShort().until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
+    @Step("Long wait for VISIBLE: {locator}")
+    public static WebElement longVisible(By locator) {
+        LOG.debug("[WAIT-LONG] visible → {}", locator);
+        return waitLong().until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
+    @Step("Long wait for INVISIBLE: {locator}")
+    public static void longInvisible(By locator) {
+        LOG.debug("[WAIT-LONG] invisible → {}", locator);
+        waitLong().until(ExpectedConditions.invisibilityOfElementLocated(locator));
+    }
+
+    // ================= UTILITY =================
+    // will be removed in future
+    public static void pause(long millis) {
+        try {
+            LOG.debug("[PAUSE] {} ms", millis);
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

@@ -4,10 +4,12 @@ import base.BaseTest;
 import io.qameta.allure.Description;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
+import vn.agest.selenium.enums.BillingProfile;
 import vn.agest.selenium.enums.ProductCategory;
 import vn.agest.selenium.model.BillingInfo;
 import vn.agest.selenium.model.Product;
 import vn.agest.selenium.pageObjects.*;
+import vn.agest.selenium.utils.ProductUtils;
 
 import java.util.List;
 
@@ -37,12 +39,15 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
         homePage.navigateToCategoryPage(ProductCategory.ELECTRONIC_COMPONENTS_SUPPLIES);
 
         // ======================= STEP 4: ADD RANDOM PRODUCT TO CART ==============
-        List<Product> selectedProducts = categoryPage.addRandomProductsToCart(10);
+        List<Product> selectedProducts = categoryPage.addRandomProductsToCart(5);
+        selectedProducts = ProductUtils.mergeList(selectedProducts);
 
         // ======================= STEP 5: CLICK CART BUTTON TO OPEN SHOPPING CART PAGE ========================
         // ======================= STEP 6: VERIFY INFORMATION IN CART ========================
         categoryPage.navigateToShoppingCartPage();
         List<Product> actualCartProducts = cartPage.getCartProductInfo();
+        actualCartProducts = ProductUtils.mergeList(actualCartProducts);
+
         softAssert.assertEquals(
                 actualCartProducts, selectedProducts,
                 "❌ Cart product info mismatch"
@@ -60,6 +65,7 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
 //
 //        // ======================= STEP 9: VERIFY ORDER DETAILS ====================
         List<Product> actualCheckoutItems = checkoutPage.getCheckoutProductInfo();
+        actualCheckoutItems = ProductUtils.mergeList(actualCheckoutItems);
 
         softAssert.assertEquals(
                 actualCheckoutItems,
@@ -70,8 +76,12 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
 ////        AllureHelper.attachScreenshot("STEP 9 - Verify checkout product details");
 //
         // ======================= STEP 10: FILL BILLING INFO WITH DEFAULT PAYMENT METHOD =========
-        BillingInfo expectedBillingInfo = checkoutPage.fillBillingDetailsDefault();
-        System.out.println("Expected Billing Info: " + expectedBillingInfo);
+        BillingInfo actualBillingInfo = checkoutPage.fillBillingDetailsDefault();
+        softAssert.assertEquals(
+                actualBillingInfo,
+                BillingProfile.DEFAULT.getInfo(),
+                "❌ Billing info filled incorrectly!"
+        );
 //
 //        // ======================= STEP 11: CLICK 'PLACE ORDER' =====================
 //        // ======================= STEP 12: VERIFY ORDER STATUS PAGE ===============

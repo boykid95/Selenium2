@@ -17,10 +17,9 @@ public enum BillingProfile {
                    String street, String city, String country, String postcode,
                    String phone, String email, String paymentMethod) {
 
-        this.billingInfo = new BillingInfo(
-                firstName, lastName,
-                street, city, country, postcode,
-                phone, email, paymentMethod
+        this.billingInfo = BillingInfo.ofTrimmed(
+                firstName, lastName, street, city, postcode,
+                country, phone, email, paymentMethod
         );
     }
 
