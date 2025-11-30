@@ -57,6 +57,18 @@ public class OrderStatusPage extends BasePage {
         }
     }
 
+    @Step("Get order confirmation message")
+    public String getOrderConfirmationMessage() {
+        try {
+            String message = orderSuccessMessage.getText().trim();
+            LOG.info("✅ Order confirmation message retrieved: {}", message);
+            return message;
+        } catch (Exception e) {
+            LOG.error("❌ Failed to retrieve order confirmation message: {}", e.getMessage());
+            return "";
+        }
+    }
+
     // ===================== PRODUCT INFO =====================
     @Step("Extract product details from Order Status page")
     public List<Product> getOrderProductInfo() {
@@ -111,7 +123,7 @@ public class OrderStatusPage extends BasePage {
         }
 
         String[] arr = lines.toArray(new String[0]);
-        
+
         String fullName = ParseHelper.safeLine(arr, 0);
         String company = ParseHelper.safeLine(arr, 1);
         String street = ParseHelper.safeLine(arr, 2);

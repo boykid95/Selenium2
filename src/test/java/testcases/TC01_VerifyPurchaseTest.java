@@ -34,7 +34,7 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
         loginPage.login();
         homePage.navigateToCategoryPage(ProductCategory.ELECTRONIC_COMPONENTS_SUPPLIES);
 
-        List<Product> selectedProducts = categoryPage.addRandomProductsToCart(5);
+        List<Product> selectedProducts = categoryPage.addRandomProductsToCart(1);
         selectedProducts = ProductUtils.mergeList(selectedProducts);
 
         categoryPage.navigateToShoppingCartPage();

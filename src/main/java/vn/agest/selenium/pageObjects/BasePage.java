@@ -66,6 +66,11 @@ public abstract class BasePage {
         driver.get(fullUrl);
     }
 
+    @Step("Navigate to Shop page from Home page")
+    public void navigateToShopPage() {
+        navigateToPage(PageType.SHOP_PAGE);
+    }
+
     // ===================== PAGE INFO =====================
 
     @Step("Get expected title of current page")
