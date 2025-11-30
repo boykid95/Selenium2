@@ -7,6 +7,7 @@ public final class Constants {
     public static final String LOG_CONFIG_PROD = "logging/log4j2-prod.xml";
     public static final String CREDENTIALS_FILE = "credentials.json";
     public static final String EDGE_DRIVER_PATH = "drivers/edge/msedgedriver.exe";
+    public static final String COUNTRIES_FILE = "data/countries.json";
 
     private Constants() {
     }

@@ -20,10 +20,6 @@
       "url": "https://demo.testarchitect.com/checkout/",
       "title": "Checkout – TestArchitect Sample Website"
     },
-    "ORDER_STATUS_PAGE": {
-      "url": "https://demo.testarchitect.com/order-status/",
-      "title": "Order Status – TestArchitect Sample Website"
-    },
     "SHOP_PAGE": {
       "url": "https://demo.testarchitect.com/shop/",
       "title": "Products – TestArchitect Sample Website"

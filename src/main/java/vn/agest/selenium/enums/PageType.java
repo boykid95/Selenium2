@@ -5,7 +5,6 @@ public enum PageType {
     LOGIN_PAGE,
     CART_PAGE,
     CHECKOUT_PAGE,
-    ORDER_STATUS_PAGE,
     SHOP_PAGE,
     PRODUCT_CATEGORY_PAGE,
 }

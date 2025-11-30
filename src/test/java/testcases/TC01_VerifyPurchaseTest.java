@@ -2,6 +2,7 @@ package testcases;
 
 import base.BaseTest;
 import io.qameta.allure.Description;
+import org.openqa.selenium.WebElement;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 import vn.agest.selenium.enums.BillingProfile;
@@ -10,6 +11,7 @@ import vn.agest.selenium.model.BillingInfo;
 import vn.agest.selenium.model.Product;
 import vn.agest.selenium.pageObjects.*;
 import vn.agest.selenium.utils.ProductUtils;
+import vn.agest.selenium.utils.StepHelper;
 
 import java.util.List;
 
@@ -26,88 +28,48 @@ public class TC01_VerifyPurchaseTest extends BaseTest {
         ProductCategoryPage categoryPage = new ProductCategoryPage();
         CartPage cartPage = new CartPage();
         CheckoutPage checkoutPage = new CheckoutPage();
-//        OrderStatusPage orderStatusPage = new OrderStatusPage();
+        OrderStatusPage orderStatusPage = new OrderStatusPage();
 
-        // ======================= STEP 1: OPEN HOME PAGE ==========================
         homePage.open();
-
-        // ======================= STEP 2: LOGIN SUCCESSFULLY ======================
         loginPage.login();
-//        AllureHelper.attachScreenshot("STEP 2 - Verify login successful");
-
-        // ======================= STEP 3: NAVIGATE TO PRODUCT CATEGORY ============
         homePage.navigateToCategoryPage(ProductCategory.ELECTRONIC_COMPONENTS_SUPPLIES);
 
-        // ======================= STEP 4: ADD RANDOM PRODUCT TO CART ==============
         List<Product> selectedProducts = categoryPage.addRandomProductsToCart(5);
         selectedProducts = ProductUtils.mergeList(selectedProducts);
 
-        // ======================= STEP 5: CLICK CART BUTTON TO OPEN SHOPPING CART PAGE ========================
-        // ======================= STEP 6: VERIFY INFORMATION IN CART ========================
         categoryPage.navigateToShoppingCartPage();
         List<Product> actualCartProducts = cartPage.getCartProductInfo();
         actualCartProducts = ProductUtils.mergeList(actualCartProducts);
 
-        softAssert.assertEquals(
-                actualCartProducts, selectedProducts,
-                "❌ Cart product info mismatch"
-        );
-////        AllureHelper.attachScreenshot("STEP 6 - Verify product info in cart");
-//
-//        // ======================= STEP 7: CLICK ON 'PROCEED TO CHECKOUT' ======================
-//        // ======================= STEP 8: VERIFY CHECKOUT PAGE DISPLAYS ======================
+        softAssert.assertEquals(actualCartProducts, selectedProducts, "❌ Cart product info mismatch");
+        WebElement cartTable = cartPage.getCartTableElement();
+        StepHelper.capture("STEP 6 - Verify product info in cart", cartTable);
+
         cartPage.navigateToCheckoutPage();
-        softAssert.assertTrue(
-                checkoutPage.isLoaded(),
-                "❌ Checkout page did not load successfully"
-        );
-////        AllureHelper.attachScreenshot("STEP 8 - Verify checkout page loaded");
-//
-//        // ======================= STEP 9: VERIFY ORDER DETAILS ====================
+        softAssert.assertTrue(checkoutPage.isLoaded(), "❌ Checkout page did not load successfully");
+        StepHelper.capture("STEP 8 - Verify checkout page loaded", checkoutPage.getCheckoutHeaderElement());
+
         List<Product> actualCheckoutItems = checkoutPage.getCheckoutProductInfo();
         actualCheckoutItems = ProductUtils.mergeList(actualCheckoutItems);
+        softAssert.assertEquals(actualCheckoutItems, actualCartProducts, "❌ Checkout product list mismatch");
+        StepHelper.capture("STEP 9 - Verify checkout product details", checkoutPage.getOrderSummaryTableElement());
 
-        softAssert.assertEquals(
-                actualCheckoutItems,
-                actualCartProducts,
-                "❌ Checkout product list does not match cart items"
-        );
-//
-////        AllureHelper.attachScreenshot("STEP 9 - Verify checkout product details");
-//
-        // ======================= STEP 10: FILL BILLING INFO WITH DEFAULT PAYMENT METHOD =========
-        BillingInfo actualBillingInfo = checkoutPage.fillBillingDetailsDefault();
-        softAssert.assertEquals(
-                actualBillingInfo,
-                BillingProfile.DEFAULT.getInfo(),
-                "❌ Billing info filled incorrectly!"
-        );
-//
-//        // ======================= STEP 11: CLICK 'PLACE ORDER' =====================
-//        // ======================= STEP 12: VERIFY ORDER STATUS PAGE ===============
-//        checkoutPage.navigateToOrderStatusPage();
-//
-//        softAssert.assertTrue(
-//                orderStatusPage.isLoaded(),
-//                "❌ Order Status page did not load successfully"
-//        );
-////        AllureHelper.attachScreenshot("STEP 12 - Verify order status page loaded");
-//
-//        // ======================= STEP 13: VERIFY ORDER DETAILS & BILLING INFO ===============
-//        List<Product> actualOrderItems = orderStatusPage.getOrderProductInfo();
-//        BillingInfo actualBillingInfo = orderStatusPage.getDisplayedBillingInfo();
-//
-//        softAssert.assertEquals(
-//                actualOrderItems,
-//                actualCheckoutItems,
-//                "❌ Ordered product details mismatch"
-//        );
-////        AllureHelper.attachScreenshot("STEP 13 - Verify order item details");
-//
-//        softAssert.assertEquals(actualBillingInfo, expectedBillingInfo, "❌ Billing info mismatch");
-//        AllureHelper.attachScreenshot("STEP 13 - Verify billing details");
+        BillingInfo checkoutBillingInfo = checkoutPage.fillBillingDetailsDefault();
+        softAssert.assertEquals(checkoutBillingInfo, BillingProfile.DEFAULT.getInfo(), "❌ Billing info mismatch");
 
-        // ======================= ASSERT ALL =====================================
+        checkoutPage.navigateToOrderStatusPage();
+        softAssert.assertTrue(orderStatusPage.isLoaded(), "❌ Order Status page did not load successfully");
+        StepHelper.capture("STEP 12 - Verify order status page loaded", orderStatusPage.getOrderElement());
+
+        List<Product> actualOrderItems = orderStatusPage.getOrderProductInfo();
+        BillingInfo orderBillingInfo = orderStatusPage.getDisplayedBillingInfo();
+
+        softAssert.assertEquals(actualOrderItems, actualCheckoutItems, "❌ Ordered product details mismatch");
+        StepHelper.capture("STEP 13 - Verify order item details", orderStatusPage.getOrderDetailsElement());
+
+        softAssert.assertEquals(orderBillingInfo, checkoutBillingInfo, "❌ Billing info mismatch");
+        StepHelper.capture("STEP 13 - Verify billing details", orderStatusPage.getBillingAddressElement());
+
         softAssert.assertAll();
     }
 }

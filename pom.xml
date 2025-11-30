@@ -16,7 +16,7 @@
         <selenium.version>4.19.1</selenium.version>
         <testng.version>7.9.0</testng.version>
         <log4j2.version>2.22.1</log4j2.version>
-        <allure.version>2.24.0</allure.version>
+        <allure.version>2.25.0</allure.version>
     </properties>
 
     <dependencies>
@@ -82,6 +82,11 @@
             <artifactId>lombok</artifactId>
             <version>1.18.30</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>ru.yandex.qatools.ashot</groupId>
+            <artifactId>ashot</artifactId>
+            <version>1.5.4</version>
         </dependency>
     </dependencies>
 

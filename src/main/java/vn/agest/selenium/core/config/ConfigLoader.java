@@ -21,19 +21,20 @@ public final class ConfigLoader {
     }
 
     private static void loadJson() {
+        final String filePạth = Constants.CONFIG_FILE;
         try (InputStream is = ConfigLoader.class.getClassLoader()
-                .getResourceAsStream(Constants.CONFIG_FILE)) {
+                .getResourceAsStream(filePạth)) {
 
             if (is == null) {
-                throw new IllegalStateException(Constants.CONFIG_FILE + " not found in resources");
+                throw new IllegalStateException(filePạth + " not found in resources");
             }
 
             rootNode = new ObjectMapper().readTree(is);
-            LOG.info("✅ Loaded {} successfully.", Constants.CONFIG_FILE);
+            LOG.info("✅ Loaded {} successfully.", filePạth);
 
         } catch (Exception e) {
-            LOG.error("❌ Failed to load {}", Constants.CONFIG_FILE, e);
-            throw new RuntimeException("Error loading " + Constants.CONFIG_FILE, e);
+            LOG.error("❌ Failed to load {}", filePạth, e);
+            throw new RuntimeException("Error loading " + filePạth, e);
         }
     }
 
@@ -112,19 +113,5 @@ public final class ConfigLoader {
             LOG.warn("⚠️ Using fallback timeout {}s for key '{}'", defaultValue, key);
         }
         return defaultValue;
-    }
-
-    // ===================== WINDOW CONFIG ======================
-
-    public static String windowMode() {
-        return getString("window.mode");
-    }
-
-    public static int windowWidth() {
-        return getInt("window.width");
-    }
-
-    public static int windowHeight() {
-        return getInt("window.height");
     }
 }

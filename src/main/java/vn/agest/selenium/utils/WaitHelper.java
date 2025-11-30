@@ -12,19 +12,6 @@ import vn.agest.selenium.core.log.LoggerManager;
 
 import java.time.Duration;
 
-/**
- * WaitHelper - centralized utility for all explicit waits.
- * Supports dynamic timeout configuration via config.json:
- * {
- * "timeouts": {
- * "short": 3,
- * "explicit": 10,
- * "long": 20
- * }
- * }
- * <p>
- * Designed for: stability, reusability, and CI/CD resilience.
- */
 public final class WaitHelper {
 
     private static final Logger LOG = LoggerManager.getLogger(WaitHelper.class);
@@ -116,19 +103,6 @@ public final class WaitHelper {
         waitDefault().until(ExpectedConditions.attributeContains(locator, attribute, value));
     }
 
-    @Step("Wait for element COUNT = {expected}")
-    public static void waitForElementCount(By locator, int expected) {
-        LOG.debug("[WAIT] element-count = {} → {}", expected, locator);
-        waitDefault().until(driver -> driver.findElements(locator).size() == expected);
-    }
-
-    @Step("Wait visible & clickable: {locator}")
-    public static WebElement waitForVisibleAndClickable(By locator) {
-        LOG.debug("[WAIT] visible & clickable → {}", locator);
-        waitForVisible(locator);
-        return waitForClickable(locator);
-    }
-
     // ================= SHORTCUTS =================
 
     @Step("Short wait for VISIBLE: {locator}")
@@ -158,5 +132,33 @@ public final class WaitHelper {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    @Step("Wait for overlay appear and disappear: {locator} (appear={appearTimeout}s, disappear={disappearTimeout}s)")
+    public static void waitForAppearAndDisappear(By locator, int appearTimeout, int disappearTimeout) {
+        LOG.debug("[WAIT] appear-disappear → {} (appear={}, disappear={})", locator, appearTimeout, disappearTimeout);
+
+        try {
+            WebDriverWait waitAppear = new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(appearTimeout));
+            WebDriverWait waitDisappear = new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(disappearTimeout));
+
+            waitAppear.until(ExpectedConditions.or(
+                    ExpectedConditions.visibilityOfElementLocated(locator),
+                    ExpectedConditions.invisibilityOfElementLocated(locator)
+            ));
+
+            waitDisappear.until(ExpectedConditions.invisibilityOfElementLocated(locator));
+
+            LOG.debug("✅ Overlay appeared and disappeared successfully: {}", locator);
+        } catch (Exception e) {
+            LOG.warn("⚠️ Overlay appear/disappear wait skipped or timed out for {}: {}", locator, e.getMessage());
+        }
+    }
+
+    @Step("Wait for overlay appear and disappear: {locator}")
+    public static void waitForAppearAndDisappear(By locator) {
+        int appear = ConfigLoader.timeout("short");
+        int disappear = ConfigLoader.timeout("long");
+        waitForAppearAndDisappear(locator, appear, disappear);
     }
 }

@@ -6,7 +6,6 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import vn.agest.selenium.core.config.SystemConfig;
 import vn.agest.selenium.core.driver.DriverManager;
-import vn.agest.selenium.core.locator.LocatorFactory;
 import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.enums.Condition;
 
@@ -33,24 +32,6 @@ public class BaseElement {
     }
 
     // ---------------- Factory Methods ----------------
-
-    public static BaseElement xpath(String template, Object... args) {
-        By by = LocatorFactory.x(template, args);
-        return new BaseElement(by);
-    }
-
-    public static BaseElement css(String template, Object... args) {
-        By by = LocatorFactory.css(template, args);
-        return new BaseElement(by);
-    }
-
-    public static By byXPath(String template, Object... args) {
-        return LocatorFactory.x(template, args);
-    }
-
-    public static By byCss(String template, Object... args) {
-        return LocatorFactory.css(template, args);
-    }
 
     public static BaseElement el(By locator) {
         return new BaseElement(locator);
@@ -188,12 +169,23 @@ public class BaseElement {
         return value;
     }
 
-    @Step("Get CSS value '{cssProperty}' of: {this.name}")
-    public String getCssValue(String cssProperty) {
-        WebElement el = findSafe();
-        String value = el.getCssValue(cssProperty);
-        LOG.debug("[CSS] {} = '{}' → {}", cssProperty, value, name);
-        return value;
+    @Step("Select this element if not already selected")
+    public void selectIfNotSelected() {
+        try {
+            if (isSelected()) {
+                LOG.debug("ℹ️ [{}] already selected — skipping click.", name);
+                return;
+            }
+
+            shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
+            scrollTo();
+            click();
+            LOG.debug("✅ [{}] selected successfully.", name);
+
+        } catch (Exception e) {
+            LOG.error("❌ Failed to select [{}]: {}", name, e.getMessage());
+            throw e;
+        }
     }
 
     public boolean isDisplayed() {
@@ -204,10 +196,10 @@ public class BaseElement {
         }
     }
 
-    public boolean isEnabled() {
+    public boolean isSelected() {
         try {
-            WebElement el = shouldBe(Condition.PRESENT);
-            return el != null && el.isEnabled();
+            boolean selected = getWebElement().isSelected();
+            return selected;
         } catch (Exception e) {
             return false;
         }

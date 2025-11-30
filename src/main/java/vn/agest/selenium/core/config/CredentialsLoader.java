@@ -21,19 +21,20 @@ public final class CredentialsLoader {
     }
 
     private static void loadJson() {
+        final String filePath = Constants.CREDENTIALS_FILE;
         try (InputStream is = CredentialsLoader.class.getClassLoader()
-                .getResourceAsStream(Constants.CREDENTIALS_FILE)) {
+                .getResourceAsStream(filePath)) {
 
             if (is == null) {
-                throw new IllegalStateException(Constants.CREDENTIALS_FILE + " not found in resources");
+                throw new IllegalStateException(filePath + " not found in resources");
             }
 
             rootNode = new ObjectMapper().readTree(is);
-            LOG.debug("Loaded {} successfully.", Constants.CREDENTIALS_FILE);
+            LOG.debug("Loaded {} successfully.", filePath);
 
         } catch (Exception e) {
-            LOG.error("Failed to load {}", Constants.CREDENTIALS_FILE, e);
-            throw new RuntimeException("Error loading " + Constants.CREDENTIALS_FILE, e);
+            LOG.error("Failed to load {}", filePath, e);
+            throw new RuntimeException("Error loading " + filePath, e);
         }
     }
 

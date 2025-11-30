@@ -17,8 +17,7 @@ public class BillingInfo {
     private String phone;
     private String email;
     private String paymentMethod;
-
-    // ============ Static Helper ============
+    private String company;
 
     private static String trim(String value) {
         return value == null ? "" : value.trim();
@@ -37,6 +36,7 @@ public class BillingInfo {
                 .phone(trim(phone))
                 .email(trim(email))
                 .paymentMethod(trim(paymentMethod))
+                .company("")
                 .build();
     }
 

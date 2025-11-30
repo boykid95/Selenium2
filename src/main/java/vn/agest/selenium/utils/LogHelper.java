@@ -14,8 +14,6 @@ public final class LogHelper {
     private LogHelper() {
     }
 
-    // ===================== BASIC LOGGING =====================
-
     @Step("Log product list: {header}")
     public static void logProductList(String header, List<Product> products) {
         if (products == null || products.isEmpty()) {
@@ -32,42 +30,4 @@ public final class LogHelper {
         }
     }
 
-    // ===================== COMPARISON LOGGING =====================
-
-    @Step("Compare expected vs actual product lists for {context}")
-    public static void logComparisonSummary(String context, List<Product> expected, List<Product> actual) {
-        LOG.info("🔎 [{}] Comparing expected vs actual product lists...", context);
-
-        if (expected == null || actual == null) {
-            LOG.error("❌ One of the product lists is null. Expected={}, Actual={}", expected, actual);
-            return;
-        }
-
-        LOG.info("📦 Expected ({}):", expected.size());
-        expected.forEach(p -> LOG.info("   → {}", formatProduct(p)));
-
-        LOG.info("🛒 Actual ({}):", actual.size());
-        actual.forEach(p -> LOG.info("   → {}", formatProduct(p)));
-    }
-
-    // ===================== DIFF LOGGING (OPTIONAL BONUS) =====================
-
-    @Step("Log differences between expected and actual lists for {context}")
-    public static void logProductDiff(String context, List<Product> expected, List<Product> actual) {
-        if (expected == null || actual == null) return;
-
-        expected.stream()
-                .filter(p -> !actual.contains(p))
-                .forEach(p -> LOG.warn("❌ [{}] Missing in actual: {}", context, formatProduct(p)));
-
-        actual.stream()
-                .filter(p -> !expected.contains(p))
-                .forEach(p -> LOG.warn("⚠️ [{}] Unexpected in actual: {}", context, formatProduct(p)));
-    }
-
-    // ===================== PRIVATE HELPERS =====================
-
-    private static String formatProduct(Product p) {
-        return String.format("%s | Price: %.2f | Qty: %d", p.getName(), p.getPrice(), p.getQuantity());
-    }
 }

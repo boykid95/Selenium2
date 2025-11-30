@@ -14,26 +14,26 @@ import vn.agest.selenium.enums.Condition;
 import vn.agest.selenium.enums.PageType;
 import vn.agest.selenium.enums.ProductCategory;
 import vn.agest.selenium.model.PageInfo;
-import vn.agest.selenium.pageObjects.components.DepartmentMenuComponent;
 import vn.agest.selenium.utils.LocatorHelper;
 import vn.agest.selenium.utils.WaitHelper;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static vn.agest.selenium.elements.BaseElement.el;
-
 public abstract class BasePage {
 
     private static final Logger LOG = LoggerManager.getLogger(BasePage.class);
-    private static final By COOKIE_NOTICE = By.id("cookie-notice");
-    private static final By COOKIE_ACCEPT_BUTTON = By.cssSelector("#cookie-notice .cn-set-cookie");
+
+    // ===================== ELEMENT LOCATORS =====================
+    protected final BaseElement cookieNoticeBanner = $id("cookie-notice", "Cookie Notice Banner");
+    protected final BaseElement cookieAcceptButton = $css("#cookie-notice .cn-set-cookie", "Cookie Accept Button");
+    protected final BaseElement popupCloseButton = $css("button.pum-close:nth-child(3)", "Popup Close Button");
+
     protected final WebDriver driver;
     protected final PageType pageType;
     protected final PageInfo pageInfo;
-    private final DepartmentMenuComponent departmentMenu = new DepartmentMenuComponent();
-    private final BaseElement popupCloseButton = new BaseElement(By.cssSelector("button.pum-close:nth-child(3)"), "Popup Close Button");
 
+    // ===================== CONSTRUCTOR =====================
     public BasePage(PageType pageType) {
         this.driver = DriverManager.getDriver();
         this.pageType = pageType;
@@ -44,7 +44,7 @@ public abstract class BasePage {
         }
     }
 
-    // ===================== OPEN PAGE =====================
+    // ===================== PAGE NAVIGATION =====================
 
     @Step("Open page: {this.pageType}")
     public void open() {
@@ -54,9 +54,9 @@ public abstract class BasePage {
 
     @Step("Navigate to page: {pageType}")
     public void navigateToPage(PageType pageType) {
-        PageInfo pageInfo = PageTitleLoader.get(pageType);
-        LOG.info("Navigating to [{}] → {}", pageType.name(), pageInfo.url());
-        driver.get(pageInfo.url());
+        PageInfo info = PageTitleLoader.get(pageType);
+        LOG.info("Navigating to [{}] → {}", pageType.name(), info.url());
+        driver.get(info.url());
     }
 
     @Step("Navigate to category page: {category.displayName}")
@@ -66,12 +66,11 @@ public abstract class BasePage {
         driver.get(fullUrl);
     }
 
-    // ===================== GETTERS =====================
+    // ===================== PAGE INFO =====================
 
     @Step("Get expected title of current page")
     public String getExpectedTitle() {
-        LOG.debug("Expected title for [{}]: {}", pageType, pageInfo.title());
-        return pageInfo.title();
+        return pageInfo != null ? pageInfo.title() : "";
     }
 
     @Step("Get current page title")
@@ -81,17 +80,27 @@ public abstract class BasePage {
         return title;
     }
 
-// ===================== DYNAMIC ELEMENT UTILITIES =====================
+    // ===================== ELEMENT FACTORY =====================
+
+    protected BaseElement $id(String id, String name) {
+        return BaseElement.el(By.id(id), name);
+    }
+
+    protected BaseElement $css(String cssSelector, String name) {
+        return BaseElement.el(By.cssSelector(cssSelector), name);
+    }
+
+    protected BaseElement $x(String xpath, String name) {
+        return BaseElement.el(By.xpath(xpath), name);
+    }
+
+    // ===================== DYNAMIC LOCATOR SUPPORT =====================
 
     protected BaseElement getDynamicElement(String locatorTemplate, Object... args) {
         return LocatorHelper.getDynamicLocator(locatorTemplate, args);
     }
 
-    protected By getDynamicBy(String locatorTemplate, Object... args) {
-        return LocatorHelper.getDynamicBy(locatorTemplate, args);
-    }
-
-    // ===================== COMMON POPUP HANDLER =====================
+    // ===================== POPUP HANDLER =====================
 
     @Step("Close popup if present")
     public void closePopupIfPresent() {
@@ -99,51 +108,46 @@ public abstract class BasePage {
 
         try {
             WebElement popup = WaitHelper.shortVisible(popupCloseButton.getLocator());
-
             if (popup != null) {
                 popupCloseButton.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
                 popupCloseButton.click();
                 LOG.debug("✅ Popup closed successfully.");
             }
         } catch (TimeoutException e) {
-            LOG.debug("No popup appeared within short wait, continue test flow.");
+            LOG.debug("No popup appeared, continue.");
         } catch (Exception e) {
-            LOG.debug("Popup handling skipped: {}", e.getMessage());
+            LOG.warn("⚠️ Popup handling skipped: {}", e.getMessage());
         }
     }
 
     // ===================== COOKIE HANDLER =====================
+
     @Step("Accept cookie notice if visible")
     public void acceptCookieIfVisible() {
-        BaseElement cookieBanner = el(COOKIE_NOTICE, "Cookie Notice Banner");
-        BaseElement acceptButton = el(COOKIE_ACCEPT_BUTTON, "Cookie Accept Button");
-
         try {
-            WebElement banner = WaitHelper.shortVisible(cookieBanner.getLocator());
-
+            WebElement banner = WaitHelper.shortVisible(cookieNoticeBanner.getLocator());
             if (banner != null && banner.isDisplayed()) {
                 LOG.info("🍪 Cookie notice detected, accepting...");
-
-                acceptButton.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
-                acceptButton.click();
-
-                WaitHelper.waitForInvisible(COOKIE_NOTICE);
+                cookieAcceptButton.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
+                cookieAcceptButton.click();
+                WaitHelper.waitForInvisible(cookieNoticeBanner.getLocator());
                 LOG.debug("✅ Cookie notice accepted.");
             } else {
-                LOG.debug("No cookie banner detected, continue.");
+                LOG.debug("No cookie banner detected.");
             }
         } catch (TimeoutException e) {
-            LOG.debug("No cookie notice present within short wait, continue.");
+            LOG.debug("No cookie notice present.");
         } catch (Exception e) {
-            LOG.warn("⚠️ Cookie notice handling skipped: {}", e.getMessage());
+            LOG.warn("⚠️ Cookie notice handling failed: {}", e.getMessage());
         }
     }
 
+    // ===================== ELEMENT COLLECTION =====================
+
     @Step("Get all BaseElements for locator: {locator}")
-    protected List<BaseElement> getAllElements(By locator, String elementName) {
+    protected List<BaseElement> getAllElements(org.openqa.selenium.By locator, String elementName) {
         LOG.debug("🔍 Fetching list of elements for: {}", elementName);
         WaitHelper.waitForVisible(locator);
-
         List<BaseElement> elements = driver.findElements(locator)
                 .stream()
                 .map(e -> BaseElement.el(e, elementName))
@@ -157,4 +161,15 @@ public abstract class BasePage {
         LOG.debug("✅ Found {} element(s) for: {}", elements.size(), elementName);
         return elements;
     }
+
+    // ===================== INPUT HANDLER =====================
+
+    @Step("Type '{value}' into {fieldName}")
+    protected void typeText(BaseElement element, String value, String fieldName) {
+        element.shouldBe(Condition.VISIBLE);
+        element.scrollTo();
+        element.clearAndSetText(value);
+        LOG.debug("⌨️ Typed '{}' into {}", value, fieldName);
+    }
+
 }

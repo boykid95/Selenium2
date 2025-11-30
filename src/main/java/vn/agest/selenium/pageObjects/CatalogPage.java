@@ -2,9 +2,9 @@ package vn.agest.selenium.pageObjects;
 
 import io.qameta.allure.Step;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.By;
 import vn.agest.selenium.core.log.LoggerManager;
 import vn.agest.selenium.elements.BaseElement;
+import vn.agest.selenium.enums.Condition;
 import vn.agest.selenium.enums.PageType;
 import vn.agest.selenium.model.Product;
 import vn.agest.selenium.utils.DataHelper;
@@ -16,38 +16,43 @@ import java.util.stream.Collectors;
 
 public abstract class CatalogPage extends BasePage {
 
-    // ================= LOCATORS =================
-    protected static final By PRODUCT_ITEMS =
-            By.xpath("//div[contains(@class,'ajax-content')]//div[contains(@class,'content-product')]");
-    protected static final By PRODUCT_TITLE =
-            By.xpath(".//h2[contains(@class,'product-title')]/a");
-    protected static final By PRODUCT_PRICE =
-            By.xpath(".//span[contains(@class,'price')]");
-    protected static final By ADD_TO_CART_BUTTON =
-            By.xpath(".//div[contains(@class,'product-details')]//a[contains(@class,'add_to_cart_button')]");
-    protected static final By LOADER =
-            By.xpath("//div[@class='et-loader']");
-    protected static final By VIEW_CART_BUTTON =
-            By.xpath("//div[@class='header-wrapper']//div[contains(@class,'header-cart')]/a[contains(@href,'/cart')]");
-    protected static final By DISCOUNTED_PRICE = By.cssSelector(".products .price ins .amount");
-    protected static final By NORMAL_PRICE = By.cssSelector(".products .price .amount");
-
     private static final Logger LOG = LoggerManager.getLogger(CatalogPage.class);
+
+    // ================= LOCATORS (DSL) =================
+    protected final BaseElement productItems =
+            $x("//div[contains(@class,'ajax-content')]//div[contains(@class,'content-product')]", "Product Items");
+    protected final BaseElement productTitle =
+            $x(".//h2[contains(@class,'product-title')]/a", "Product Title");
+    protected final BaseElement productPrice =
+            $x(".//span[contains(@class,'price')]", "Product Price");
+    protected final BaseElement addToCartButton =
+            $x(".//div[contains(@class,'product-details')]//a[contains(@class,'add_to_cart_button')]", "Add to Cart Button");
+    protected final BaseElement loader =
+            $x("//div[@class='et-loader']", "Loader Spinner");
+    protected final BaseElement viewCartButton =
+            $x("//div[@class='header-wrapper']//div[contains(@class,'header-cart')]/a[contains(@href,'/cart')]", "View Cart Button");
+    protected final BaseElement discountedPrice =
+            $css(".products .price ins .amount", "Discounted Price");
+    protected final BaseElement normalPrice =
+            $css(".products .price .amount", "Normal Price");
+
+    // ================= STATE VARIABLES =================
     protected BaseElement selectedProductElement;
     protected Product selectedProduct;
 
+    // ================= CONSTRUCTOR =================
     protected CatalogPage(PageType pageType) {
         super(pageType);
     }
 
-    // ================= COMMON PRODUCT ACTIONS =================
+    // ================= METHODS =================
 
     @Step("Get all available products from catalog")
     protected List<BaseElement> getAllProducts() {
         LOG.debug("🔍 Fetching product list...");
-        WaitHelper.waitForVisible(PRODUCT_ITEMS);
+        WaitHelper.waitForVisible(productItems.getLocator());
 
-        List<BaseElement> products = driver.findElements(PRODUCT_ITEMS)
+        List<BaseElement> products = driver.findElements(productItems.getLocator())
                 .stream()
                 .map(e -> BaseElement.el(e, "Product Item"))
                 .collect(Collectors.toList());
@@ -65,8 +70,8 @@ public abstract class CatalogPage extends BasePage {
     protected void selectProductByIndex(List<BaseElement> products, int index) {
         selectedProductElement = products.get(index);
 
-        String name = selectedProductElement.findChild(PRODUCT_TITLE).getText().trim();
-        String priceText = extractPrice(selectedProductElement.findChild(PRODUCT_PRICE));
+        String name = selectedProductElement.findChild(productTitle.getLocator()).getText().trim();
+        String priceText = extractPrice(selectedProductElement.findChild(productPrice.getLocator()));
         double price = DataHelper.parsePrice(priceText);
 
         selectedProduct = new Product(name, price, 1);
@@ -75,14 +80,14 @@ public abstract class CatalogPage extends BasePage {
 
     @Step("Extract visible price from product element")
     protected String extractPrice(BaseElement priceContainer) {
-        List<BaseElement> priceElements = priceContainer.findBaseElements(DISCOUNTED_PRICE);
+        List<BaseElement> priceElements = priceContainer.findBaseElements(discountedPrice.getLocator());
         if (!priceElements.isEmpty()) {
             return priceElements.get(0).getText().trim();
         }
 
-        priceElements = priceContainer.findBaseElements(NORMAL_PRICE);
+        priceElements = priceContainer.findBaseElements(normalPrice.getLocator());
         if (!priceElements.isEmpty()) {
-            return priceElements.get(priceElements.size() - 1).getText().trim();  // Giá bình thường
+            return priceElements.get(priceElements.size() - 1).getText().trim();
         }
 
         LOG.warn("⚠️ No price text found for product!");
@@ -92,28 +97,25 @@ public abstract class CatalogPage extends BasePage {
     @Step("Click 'Add to Cart' for selected product")
     protected void clickAddToCartButton() {
         LOG.info("🛒 Clicking 'Add to Cart' for '{}'", selectedProduct.getName());
-        BaseElement addToCart = selectedProductElement.findChild(ADD_TO_CART_BUTTON);
-        addToCart.scrollTo();
-        addToCart.click();
+
+        BaseElement addButton = selectedProductElement.findChild(addToCartButton.getLocator());
+        addButton.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
+        addButton.scrollTo().click();
+
         waitForLoaderToDisappear();
     }
 
-    @Step("Wait for loader to disappear after adding to cart")
+    @Step("Wait for loader to appear and disappear")
     protected void waitForLoaderToDisappear() {
-        try {
-            WaitHelper.waitForPresence(LOADER);
-            WaitHelper.waitForInvisible(LOADER);
-            LOG.debug("Loader disappeared successfully.");
-        } catch (Exception e) {
-            LOG.debug("Loader not found or already gone.");
-        }
+        LOG.debug("⏳ Waiting for loader to appear/disappear...");
+        WaitHelper.waitForAppearAndDisappear(loader.getLocator());
     }
 
     @Step("Add {count} random product(s) to cart (duplicates allowed)")
     public List<Product> addRandomProductsToCart(int count) {
         LOG.info("🛒 Adding {} random product(s) to cart (duplicates allowed)...", count);
 
-        WaitHelper.waitForVisible(PRODUCT_ITEMS);
+        WaitHelper.waitForVisible(productItems.getLocator());
         List<BaseElement> products = getAllProducts();
         int totalAvailable = products.size();
 
@@ -129,10 +131,8 @@ public abstract class CatalogPage extends BasePage {
             try {
                 int randomIndex = DataHelper.getRandomNumber(0, totalAvailable - 1);
                 selectProductByIndex(products, randomIndex);
-
                 clickAddToCartButton();
                 addedProducts.add(selectedProduct);
-
             } catch (Exception e) {
                 LOG.warn("⚠️ Failed to add product #{}: {}", i, e.getMessage());
             }
@@ -145,15 +145,9 @@ public abstract class CatalogPage extends BasePage {
     @Step("Navigate to Shopping Cart page via View Cart button")
     public CartPage navigateToShoppingCartPage() {
         LOG.info("🛒 Navigating to Shopping Cart page...");
-        BaseElement viewCartButton = BaseElement.el(VIEW_CART_BUTTON, "View Cart Button");
-        viewCartButton.scrollTo();
-        viewCartButton.click();
+        viewCartButton.shouldBe(Condition.VISIBLE, Condition.CLICKABLE);
+        viewCartButton.scrollTo().click();
         LOG.debug("✅ Shopping Cart page opened.");
         return new CartPage();
-    }
-
-    // ================ Getter ================
-    public Product getSelectedProduct() {
-        return selectedProduct;
     }
 }
