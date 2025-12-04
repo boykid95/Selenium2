@@ -5,7 +5,9 @@
   "timeouts": {
     "explicit": 10,
     "implicit": 5,
-    "pageLoad": 20
+    "pageLoad": 20,
+    "short": 3,
+    "long": 20
   },
   "window": {
     "mode": "custom",

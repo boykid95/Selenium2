@@ -1,8 +1,28 @@
 {
   "pages": {
     "HOME_PAGE": {
-      "url": "https://google.com/",
-      "title": "GoogleGo"
+      "url": "https://demo.testarchitect.com/",
+      "title": "TestArchitect Sample Website – Just using for training purpose only"
+    },
+    "LOGIN_PAGE": {
+      "url": "https://demo.testarchitect.com/my-account/",
+      "title": "My Account – TestArchitect Sample Website"
+    },
+    "PRODUCT_CATEGORY_PAGE": {
+      "url": "https://demo.testarchitect.com/product-category/",
+      "title": "Product Category Page (Dynamic)"
+    },
+    "CART_PAGE": {
+      "url": "https://demo.testarchitect.com/cart/",
+      "title": "Cart – TestArchitect Sample Website"
+    },
+    "CHECKOUT_PAGE": {
+      "url": "https://demo.testarchitect.com/checkout/",
+      "title": "Checkout – TestArchitect Sample Website"
+    },
+    "SHOP_PAGE": {
+      "url": "https://demo.testarchitect.com/shop/",
+      "title": "Products – TestArchitect Sample Website"
     }
   }
 }

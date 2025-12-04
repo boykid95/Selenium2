@@ -19,13 +19,37 @@ public final class WaitHelper {
     private WaitHelper() {
     }
 
-    // ================= CORE WAIT =================
+    // ================= CORE WAIT FACTORIES =================
+
     private static WebDriverWait waitDefault() {
-        int timeout = ConfigLoader.timeout("explicit");
-        return new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(timeout));
+        return new WebDriverWait(
+                DriverManager.getDriver(),
+                Duration.ofSeconds(ConfigLoader.timeout("explicit", 10))
+        );
+    }
+
+    private static WebDriverWait waitShort() {
+        return new WebDriverWait(
+                DriverManager.getDriver(),
+                Duration.ofSeconds(ConfigLoader.timeout("short", 3))
+        );
+    }
+
+    private static WebDriverWait waitLong() {
+        return new WebDriverWait(
+                DriverManager.getDriver(),
+                Duration.ofSeconds(ConfigLoader.timeout("long", 20))
+        );
     }
 
     // ================= BASIC WAITS =================
+
+    @Step("Wait for VISIBLE: {locator} (timeout={timeout}s)")
+    public static WebElement waitForVisible(By locator, int timeout) {
+        LOG.debug("[WAIT:{}s] visible → {}", timeout, locator);
+        return new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(timeout))
+                .until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
 
     @Step("Wait for VISIBLE: {locator}")
     public static WebElement waitForVisible(By locator) {
@@ -45,15 +69,23 @@ public final class WaitHelper {
         return waitDefault().until(ExpectedConditions.presenceOfElementLocated(locator));
     }
 
+    // ================= INVISIBLE =================
+
+    @Step("Wait for INVISIBLE: {locator} (timeout={timeout}s)")
+    public static void waitForInvisible(By locator, int timeout) {
+        LOG.debug("[WAIT:{}s] invisible → {}", timeout, locator);
+        new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(timeout))
+                .until(ExpectedConditions.invisibilityOfElementLocated(locator));
+    }
+
     @Step("Wait for INVISIBLE: {locator}")
     public static void waitForInvisible(By locator) {
-        LOG.debug("[WAIT] invisible → {}", locator);
-        waitDefault().until(ExpectedConditions.invisibilityOfElementLocated(locator));
+        waitForInvisible(locator, ConfigLoader.timeout("explicit", 10));
     }
 
     // ================= ADVANCED WAITS =================
 
-    @Step("Wait for TEXT '{text}' in: {locator}")
+    @Step("Wait for TEXT '{text}' in {locator}")
     public static void waitForText(By locator, String text) {
         LOG.debug("[WAIT] text '{}' → {}", text, locator);
         waitDefault().until(ExpectedConditions.textToBePresentInElementLocated(locator, text));
@@ -71,27 +103,62 @@ public final class WaitHelper {
         waitDefault().until(ExpectedConditions.attributeContains(locator, attribute, value));
     }
 
-    @Step("Wait for element COUNT = {expected}")
-    public static void waitForElementCount(By locator, int expected) {
-        LOG.debug("[WAIT] element-count = {} → {}", expected, locator);
-        waitDefault().until(driver -> driver.findElements(locator).size() == expected);
+    // ================= SHORTCUTS =================
+
+    @Step("Short wait for VISIBLE: {locator}")
+    public static WebElement shortVisible(By locator) {
+        LOG.debug("[WAIT-SHORT] visible → {}", locator);
+        return waitShort().until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
-    @Step("Wait for PAGE LOAD complete")
-    public static void waitForPageLoaded() {
-        LOG.debug("[WAIT] document.readyState = complete");
-        waitDefault().until(d ->
-                "complete".equals(
-                        ((org.openqa.selenium.JavascriptExecutor) d)
-                                .executeScript("return document.readyState")
-                )
-        );
+    @Step("Long wait for VISIBLE: {locator}")
+    public static WebElement longVisible(By locator) {
+        LOG.debug("[WAIT-LONG] visible → {}", locator);
+        return waitLong().until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
-    @Step("Wait visible & clickable: {locator}")
-    public static WebElement waitForVisibleAndClickable(By locator) {
-        LOG.debug("[WAIT] visible & clickable → {}", locator);
-        waitForVisible(locator);
-        return waitForClickable(locator);
+    @Step("Long wait for INVISIBLE: {locator}")
+    public static void longInvisible(By locator) {
+        LOG.debug("[WAIT-LONG] invisible → {}", locator);
+        waitLong().until(ExpectedConditions.invisibilityOfElementLocated(locator));
+    }
+
+    // ================= UTILITY =================
+    // will be removed in future
+    public static void pause(long millis) {
+        try {
+            LOG.debug("[PAUSE] {} ms", millis);
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @Step("Wait for overlay appear and disappear: {locator} (appear={appearTimeout}s, disappear={disappearTimeout}s)")
+    public static void waitForAppearAndDisappear(By locator, int appearTimeout, int disappearTimeout) {
+        LOG.debug("[WAIT] appear-disappear → {} (appear={}, disappear={})", locator, appearTimeout, disappearTimeout);
+
+        try {
+            WebDriverWait waitAppear = new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(appearTimeout));
+            WebDriverWait waitDisappear = new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(disappearTimeout));
+
+            waitAppear.until(ExpectedConditions.or(
+                    ExpectedConditions.visibilityOfElementLocated(locator),
+                    ExpectedConditions.invisibilityOfElementLocated(locator)
+            ));
+
+            waitDisappear.until(ExpectedConditions.invisibilityOfElementLocated(locator));
+
+            LOG.debug("✅ Overlay appeared and disappeared successfully: {}", locator);
+        } catch (Exception e) {
+            LOG.warn("⚠️ Overlay appear/disappear wait skipped or timed out for {}: {}", locator, e.getMessage());
+        }
+    }
+
+    @Step("Wait for overlay appear and disappear: {locator}")
+    public static void waitForAppearAndDisappear(By locator) {
+        int appear = ConfigLoader.timeout("short");
+        int disappear = ConfigLoader.timeout("long");
+        waitForAppearAndDisappear(locator, appear, disappear);
     }
 }

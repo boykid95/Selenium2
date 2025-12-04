@@ -26,12 +26,13 @@ public final class PageTitleLoader {
     }
 
     private static void loadJson() {
+        final String filePath = Constants.PAGE_TITLES_FILE;
         try (InputStream is = PageTitleLoader.class.getClassLoader()
-                .getResourceAsStream(Constants.PAGE_TITLES_FILE)) {
+                .getResourceAsStream(filePath)) {
 
             if (is == null) {
                 throw new IllegalStateException(
-                        "Cannot find " + Constants.PAGE_TITLES_FILE + " in resources!");
+                        "Cannot find " + filePath + " in resources!");
             }
 
             JsonNode root = new ObjectMapper().readTree(is);
@@ -50,7 +51,7 @@ public final class PageTitleLoader {
                 PAGE_MAP.put(type, new PageInfo(url, title));
             }
 
-            LOG.info("Page titles successfully loaded from {}", Constants.PAGE_TITLES_FILE);
+            LOG.info("Page titles successfully loaded from {}", filePath);
 
         } catch (Exception ex) {
             LOG.error("Failed to load page titles!", ex);

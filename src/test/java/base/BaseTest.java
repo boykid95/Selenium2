@@ -9,6 +9,7 @@ import org.testng.annotations.Parameters;
 import vn.agest.selenium.core.config.ConfigLoader;
 import vn.agest.selenium.core.driver.DriverManager;
 import vn.agest.selenium.core.log.LoggerManager;
+import vn.agest.selenium.utils.WaitHelper;
 
 public abstract class BaseTest {
 
@@ -36,6 +37,7 @@ public abstract class BaseTest {
 
     @AfterMethod(alwaysRun = true)
     public void tearDown(ITestResult result) {
+        WaitHelper.pause(2000); // will be removed in future
         DriverManager.quitDriver();
     }
 }

@@ -21,19 +21,20 @@ public final class ConfigLoader {
     }
 
     private static void loadJson() {
+        final String filePạth = Constants.CONFIG_FILE;
         try (InputStream is = ConfigLoader.class.getClassLoader()
-                .getResourceAsStream(Constants.CONFIG_FILE)) {
+                .getResourceAsStream(filePạth)) {
 
             if (is == null) {
-                throw new IllegalStateException(Constants.CONFIG_FILE + " not found in resources");
+                throw new IllegalStateException(filePạth + " not found in resources");
             }
 
             rootNode = new ObjectMapper().readTree(is);
-            LOG.info("Loaded {} successfully.", Constants.CONFIG_FILE);
+            LOG.info("✅ Loaded {} successfully.", filePạth);
 
         } catch (Exception e) {
-            LOG.error("Failed to load {}", Constants.CONFIG_FILE, e);
-            throw new RuntimeException("Error loading " + Constants.CONFIG_FILE, e);
+            LOG.error("❌ Failed to load {}", filePạth, e);
+            throw new RuntimeException("Error loading " + filePạth, e);
         }
     }
 
@@ -71,8 +72,8 @@ public final class ConfigLoader {
         for (String key : path.split("\\.")) {
             node = node.get(key);
             if (node == null) {
-                LOG.error("Missing config key: {}", path);
-                throw new IllegalArgumentException("Config key not found: " + path);
+                LOG.warn("⚠️ Missing config key: {} → using fallback if available.", path);
+                return null;
             }
         }
         return node;
@@ -96,19 +97,21 @@ public final class ConfigLoader {
         return getBoolean("headless");
     }
 
+    // ===================== TIMEOUT HELPERS ======================
     public static int timeout(String key) {
         return getInt("timeouts." + key);
     }
 
-    public static String windowMode() {
-        return getString("window.mode");
-    }
-
-    public static int windowWidth() {
-        return getInt("window.width");
-    }
-
-    public static int windowHeight() {
-        return getInt("window.height");
+    public static int timeout(String key, int defaultValue) {
+        try {
+            JsonNode node = getNode("timeouts." + key);
+            if (node != null && node.isInt()) {
+                return node.asInt();
+            }
+            LOG.warn("⚠️ Timeout key '{}' not found, fallback = {}s", key, defaultValue);
+        } catch (Exception e) {
+            LOG.warn("⚠️ Using fallback timeout {}s for key '{}'", defaultValue, key);
+        }
+        return defaultValue;
     }
 }
